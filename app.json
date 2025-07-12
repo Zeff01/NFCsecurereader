@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -18,7 +18,8 @@
       "bundleIdentifier": "com.nfcsecurereader.app",
       "infoPlist": {
         "NFCReaderUsageDescription": "This app uses NFC to securely read and analyze NFC tags",
-        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication"
+        "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,12 +27,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.nfcsecurereader.app",
       "permissions": [
         "android.permission.NFC",
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.VIBRATE"
       ]
     },
     "web": {
@@ -39,12 +40,10 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Allow NFC Secure Reader to interact with nearby NFC devices",
-          "selectIdentifiers": ["D2760000850100", "D2760000850101"]
+          "nfcPermission": "Allow NFC Secure Reader to interact with nearby NFC devices"
         }
       ],
       [
@@ -54,6 +53,12 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a64f06f-dc34-437a-9874-21b85f43de02"
+      }
+    }
   }
 }

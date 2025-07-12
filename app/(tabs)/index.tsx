@@ -1,3 +1,4 @@
+// app/(tabs)/index.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -19,6 +20,7 @@ import { FloatingParticles } from '@/components/FloatingParticles';
 import { TagAnalysisModal } from '@/components/TagAnalysisModal';
 import { nfcManager, NFCTagData } from '@/lib/nfc-manager';
 
+// Make sure this is a default export
 export default function HomePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanResult, setLastScanResult] = useState<NFCTagData | null>(null);
@@ -49,14 +51,25 @@ export default function HomePage() {
     try {
       setIsScanning(true);
       
+      // Check if NFC is available
+      const isAvailable = await nfcManager.isNFCAvailable();
+      if (!isAvailable) {
+        Alert.alert(
+          '📱 NFC Not Available',
+          'NFC is not supported or enabled on this device. Please enable NFC in Settings.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
       // Show scanning alert
       Alert.alert(
         '🛡️ NFC Protection Scan',
-        'Scanning for NFC tags... This is a simulated scan in Expo Go.',
+        'Hold your device near an NFC tag to scan...',
         [{ text: 'Cancel', onPress: () => setIsScanning(false) }]
       );
       
-      // Perform NFC scan (simulated)
+      // Perform NFC scan
       const tagData = await nfcManager.readNFCTag();
       setLastScanResult(tagData);
       
@@ -79,6 +92,7 @@ export default function HomePage() {
       );
       
     } catch (error) {
+      console.error('NFC Error:', error);
       Alert.alert(
         '❌ NFC Scan Error', 
         (error as Error).message,
