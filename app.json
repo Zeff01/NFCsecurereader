@@ -1,23 +1,22 @@
 {
   "expo": {
-    "name": "NFCSecureReader",
-    "slug": "NFCSecureReader",
-    "version": "1.0.0",
-    "scheme": "nfcsecurereader",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": false,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#667eea"
-    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "This app uses NFC to read secure tags.",
+          "selectIdentifiers": ["A0000002471001"],
+          "systemCodes": ["8008"]
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nfcsecurereader.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "NFCReaderUsageDescription": "This app uses NFC to read secure tags."
       }
     },
     "android": {
@@ -25,20 +24,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
-      "package": "com.nfcsecurereader.app"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store"
-    ],
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "1a64f06f-dc34-437a-9874-21b85f43de02"
-      }
+      "package": "com.nfcsecurereader.app",
+      "permissions": [
+        "android.permission.NFC"
+      ]
     }
   }
 }
