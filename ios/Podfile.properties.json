@@ -1,4 +1,9 @@
 {
+  "ios.deploymentTarget": "13.4",
+  "ios.useFrameworks": "static",
+  "apple.ccacheEnabled": "false",
+  "apple.privacyManifestAggregationEnabled": "true",
   "expo.jsEngine": "hermes",
-  "EX_DEV_CLIENT_NETWORK_INSPECTOR": "true"
+  "EX_DEV_CLIENT_NETWORK_INSPECTOR": "false",
+  "newArchEnabled": "false"
 }

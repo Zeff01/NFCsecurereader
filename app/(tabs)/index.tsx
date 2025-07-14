@@ -1,4 +1,4 @@
-// app/(tabs)/index.tsx
+// app/(tabs)/index.tsx - Fixed Home Screen
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -18,18 +18,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FeatureCard } from '@/components/FeatureCard';
 import { FloatingParticles } from '@/components/FloatingParticles';
 import { TagAnalysisModal } from '@/components/TagAnalysisModal';
-import { nfcManager, NFCTagData } from '@/lib/nfc-manager';
+// 🔥 NEW CLEAN IMPORT
+import { nfcManager, NFCTagData } from '@/lib/nfc';
 
-// Make sure this is a default export
 export default function HomePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanResult, setLastScanResult] = useState<NFCTagData | null>(null);
   const [showTagAnalysis, setShowTagAnalysis] = useState(false);
+  const [nfcInitialized, setNfcInitialized] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
 
   useEffect(() => {
+    // Initialize NFC on app start
+    initializeNFC();
+
+    // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -44,6 +49,18 @@ export default function HomePage() {
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
+
+  const initializeNFC = async () => {
+    try {
+      const initialized = await nfcManager.initialize();
+      setNfcInitialized(initialized);
+      if (!initialized) {
+        console.warn('⚠️ NFC initialization failed');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize NFC:', error);
+    }
+  };
 
   const handleProtectPress = async () => {
     if (isScanning) return;
@@ -76,7 +93,7 @@ export default function HomePage() {
       // Show results with protection options
       Alert.alert(
         '✅ NFC Tag Detected!',
-        `Tag ID: ${tagData.id}\nType: ${tagData.type}\nRecords: ${tagData.ndefRecords.length}\nWritable: ${tagData.isWritable ? 'Yes' : 'No'}`,
+        `Tag ID: ${tagData.id.substring(0, 12)}...\nType: ${tagData.type}\nRecords: ${tagData.ndefRecords.length}\nWritable: ${tagData.isWritable ? 'Yes' : 'No'}`,
         [
           { 
             text: 'Analyze & Protect', 
@@ -93,9 +110,10 @@ export default function HomePage() {
       
     } catch (error) {
       console.error('NFC Error:', error);
+      const errorMessage = (error as Error).message || 'Unknown NFC error occurred';
       Alert.alert(
         '❌ NFC Scan Error', 
-        (error as Error).message,
+        errorMessage,
         [{ text: 'Try Again' }]
       );
     } finally {
@@ -107,13 +125,13 @@ export default function HomePage() {
     let details = `🏷️ Tag Details:\n\n`;
     details += `ID: ${tagData.id}\n`;
     details += `Type: ${tagData.type}\n`;
-    details += `Size: ${tagData.maxSize} bytes\n`;
+    details += `Size: ${tagData.maxSize || 0} bytes\n`;
     details += `Technologies: ${tagData.techTypes.join(', ')}\n\n`;
     
     if (tagData.ndefRecords.length > 0) {
       details += `📄 NDEF Records (${tagData.ndefRecords.length}):\n`;
       tagData.ndefRecords.forEach((record, index) => {
-        details += `\n${index + 1}. ${record.type || 'Unknown'}\n`;
+        details += `\n${index + 1}. Type: ${record.type || 'Unknown'}\n`;
         if (record.payload?.type === 'text') {
           details += `   Text: "${record.payload.text}"\n`;
         } else if (record.payload?.type === 'uri') {
@@ -134,6 +152,14 @@ export default function HomePage() {
       [{ text: 'OK' }]
     );
   };
+
+  const getSystemStatus = () => {
+    if (isScanning) return { text: 'Scanning...', color: '#FFC107' };
+    if (!nfcInitialized) return { text: 'NFC Unavailable', color: '#F44336' };
+    return { text: 'System Ready', color: '#4CAF50' };
+  };
+
+  const systemStatus = getSystemStatus();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -181,11 +207,9 @@ export default function HomePage() {
             <View style={styles.statusContainer}>
               <View style={[
                 styles.statusDot, 
-                { backgroundColor: isScanning ? '#FFC107' : '#4CAF50' }
+                { backgroundColor: systemStatus.color }
               ]} />
-              <Text style={styles.statusText}>
-                {isScanning ? 'Scanning...' : 'System Ready'}
-              </Text>
+              <Text style={styles.statusText}>{systemStatus.text}</Text>
               {isScanning && (
                 <ActivityIndicator 
                   size="small" 
@@ -205,7 +229,7 @@ export default function HomePage() {
               color={['#4facfe', '#00f2fe']}
               onPress={handleProtectPress}
               delay={300}
-              disabled={isScanning}
+              disabled={isScanning || !nfcInitialized}
             />
 
             <FeatureCard
@@ -246,64 +270,31 @@ export default function HomePage() {
             </Animatable.View>
           )}
 
-          {/* Protection Features Preview */}
+          {/* System Info */}
           <Animatable.View 
             animation="fadeInUp" 
             delay={900}
-            style={styles.protectionPreview}
+            style={styles.systemInfo}
           >
-            <View style={styles.previewHeader}>
-              <Ionicons name="shield-checkmark" size={24} color="#fff" />
-              <Text style={styles.previewTitle}>Protection Features</Text>
+            <View style={styles.infoHeader}>
+              <Ionicons name="information-circle" size={24} color="#fff" />
+              <Text style={styles.infoTitle}>System Status</Text>
             </View>
             
-            <View style={styles.featuresList}>
-              {[
-                'Multi-factor Authentication',
-                'Biometric Security Lock',
-                'Real-time Threat Detection',
-                'Encrypted Data Storage',
-                'Access Audit Logging',
-                'Session Management'
-              ].map((feature, index) => (
-                <Animatable.View
-                  key={feature}
-                  animation="fadeInLeft"
-                  delay={1200 + (index * 100)}
-                  style={styles.featureItem}
-                >
-                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </Animatable.View>
-              ))}
+            <View style={styles.infoGrid}>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>NFC Support</Text>
+                <Text style={styles.infoValue}>{nfcInitialized ? '✅' : '❌'}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Threat Detection</Text>
+                <Text style={styles.infoValue}>✅ Active</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Encryption</Text>
+                <Text style={styles.infoValue}>🔒 AES-256</Text>
+              </View>
             </View>
-          </Animatable.View>
-
-          {/* Stats Section */}
-          <Animatable.View 
-            animation="fadeInUp" 
-            delay={1500}
-            style={styles.statsContainer}
-          >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']}
-              style={styles.statsGradient}
-            >
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>256</Text>
-                <Text style={styles.statLabel}>Bit Encryption</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>99.9%</Text>
-                <Text style={styles.statLabel}>Security Rate</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>24/7</Text>
-                <Text style={styles.statLabel}>Protection</Text>
-              </View>
-            </LinearGradient>
           </Animatable.View>
         </ScrollView>
 
@@ -421,64 +412,42 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: 'monospace',
   },
-  protectionPreview: {
+  systemInfo: {
     marginHorizontal: 20,
-    marginTop: 30,
+    marginTop: 20,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     padding: 20,
   },
-  previewHeader: {
+  infoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  previewTitle: {
+  infoTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 8,
   },
-  featuresList: {
+  infoGrid: {
     gap: 8,
   },
-  featureItem: {
+  infoItem: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  featureText: {
+  infoLabel: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    marginLeft: 8,
-  },
-  statsContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  statsGradient: {
-    flexDirection: 'row',
-    paddingVertical: 20,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 16,
+  infoValue: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
   },
 });

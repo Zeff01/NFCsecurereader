@@ -14,7 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 
-import { nfcManager, NFCAccessLog, ThreatReport } from '@/lib/nfc-manager';
+import { nfcManager, NFCAccessLog, ThreatReport } from '@/lib/nfc';
+
 
 // Tab Button Component
 const TabButton: React.FC<{

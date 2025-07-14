@@ -1,3 +1,4 @@
+// components/TagAnalysisModal.tsx - Updated with clean API
 import React, { useState } from 'react';
 import {
   Modal,
@@ -12,7 +13,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
-import { NFCTagData, nfcManager } from '@/lib/nfc-manager';
+// 🔥 NEW CLEAN IMPORT
+import { NFCTagData, nfcManager } from '@/lib/nfc';
 
 interface TagAnalysisModalProps {
   visible: boolean;
@@ -306,6 +308,7 @@ const InfoItem: React.FC<{ label: string; value: string }> = ({ label, value }) 
   </View>
 );
 
+// Styles remain the same as before
 const styles = StyleSheet.create({
   container: {
     flex: 1,
