@@ -7,13 +7,15 @@ interface FloatingParticleProps {
   top?: string;
 }
 
-const FloatingParticle: React.FC<FloatingParticleProps> = ({ 
-  delay, 
-  left = '10%', 
-  top = '20%' 
+const FloatingParticle: React.FC<FloatingParticleProps> = ({
+  delay,
+  left = '10%',  // Default left position
+  top = '20%'    // Default top position
 }) => {
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0.3)).current;
+  const leftAnim = useRef(new Animated.Value(parseInt(left, 10))).current; // Use Animated.Value for left
+  const topAnim = useRef(new Animated.Value(parseInt(top, 10))).current;   // Use Animated.Value for top
 
   useEffect(() => {
     const createAnimation = () => {
@@ -57,8 +59,8 @@ const FloatingParticle: React.FC<FloatingParticleProps> = ({
       style={[
         styles.particle,
         {
-          left,
-          top,
+          left: leftAnim,
+          top: topAnim,
           transform: [{ translateY: translateYAnim }],
           opacity: opacityAnim,
         },

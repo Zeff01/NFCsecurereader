@@ -1,12 +1,6 @@
 // lib/nfc/types.ts - Proper TypeScript interfaces
-export interface ParsedPayload {
-  type: 'text' | 'uri' | 'raw' | 'error';
-  text?: string;
-  language?: string;
-  uri?: string;
-  data?: string;
-  error?: string;
-}
+
+export type ParsedPayload = string;
 
 export interface NDEFRecord {
   id: string | null;
@@ -45,4 +39,28 @@ export interface ThreatReport {
   description: string;
   tagId?: string;
   blocked: boolean;
+}
+
+// Updated interface - removed simulated fields
+export interface ClonedCardData {
+  originalUID: string;
+  extractedData: {
+    uid: string;
+    type?: string;
+    techTypes: string[];
+    records: NDEFRecord[];
+    timestamp: string;
+    realContent: string;
+    maxSize?: number;
+    isWritable?: boolean;
+  };
+  clonedAt: string;
+  // Removed accessLevel and userInfo - they were simulated
+}
+
+export interface CloneResult {
+  success: boolean;
+  message: string;
+  clonedData?: ClonedCardData;
+  error?: string;
 }

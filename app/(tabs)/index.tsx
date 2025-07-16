@@ -9,6 +9,7 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,9 @@ import { TagAnalysisModal } from '@/components/TagAnalysisModal';
 // 🔥 NEW CLEAN IMPORT
 import { nfcManager, NFCTagData } from '@/lib/nfc';
 
+import { useRouter } from 'expo-router';
+
+
 export default function HomePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanResult, setLastScanResult] = useState<NFCTagData | null>(null);
@@ -29,6 +33,8 @@ export default function HomePage() {
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
+  const router = useRouter();
+
 
   useEffect(() => {
     // Initialize NFC on app start
@@ -81,8 +87,8 @@ export default function HomePage() {
       
       // Show scanning alert
       Alert.alert(
-        '🛡️ NFC Protection Scan',
-        'Hold your device near an NFC tag to scan...',
+        '🛡️ NFC Reader',
+        'Hold device near an NFC tag to scan',
         [{ text: 'Cancel', onPress: () => setIsScanning(false) }]
       );
       
@@ -92,11 +98,11 @@ export default function HomePage() {
       
       // Show results with protection options
       Alert.alert(
-        '✅ NFC Tag Detected!',
+        '✅ Tag Detected!',
         `Tag ID: ${tagData.id.substring(0, 12)}...\nType: ${tagData.type}\nRecords: ${tagData.ndefRecords.length}\nWritable: ${tagData.isWritable ? 'Yes' : 'No'}`,
         [
           { 
-            text: 'Analyze & Protect', 
+            text: 'Analyse & Protect', 
             onPress: () => setShowTagAnalysis(true)
           },
           { 
@@ -110,9 +116,9 @@ export default function HomePage() {
       
     } catch (error) {
       console.error('NFC Error:', error);
-      const errorMessage = (error as Error).message || 'Unknown NFC error occurred';
+      const errorMessage = (error as Error).message || 'Unknown error';
       Alert.alert(
-        '❌ NFC Scan Error', 
+        '❌ Scan Error', 
         errorMessage,
         [{ text: 'Try Again' }]
       );
@@ -122,34 +128,27 @@ export default function HomePage() {
   };
 
   const showTagDetails = (tagData: NFCTagData) => {
-    let details = `🏷️ Tag Details:\n\n`;
-    details += `ID: ${tagData.id}\n`;
-    details += `Type: ${tagData.type}\n`;
-    details += `Size: ${tagData.maxSize || 0} bytes\n`;
-    details += `Technologies: ${tagData.techTypes.join(', ')}\n\n`;
+    const details = `🏷️ Tag Details:
     
-    if (tagData.ndefRecords.length > 0) {
-      details += `📄 NDEF Records (${tagData.ndefRecords.length}):\n`;
-      tagData.ndefRecords.forEach((record, index) => {
-        details += `\n${index + 1}. Type: ${record.type || 'Unknown'}\n`;
-        if (record.payload?.type === 'text') {
-          details += `   Text: "${record.payload.text}"\n`;
-        } else if (record.payload?.type === 'uri') {
-          details += `   URI: ${record.payload.uri}\n`;
-        }
-      });
-    } else {
-      details += `📄 No NDEF records found`;
-    }
+    ID: ${tagData.id}
+    Type: ${tagData.type}
+    Records: ${tagData.ndefRecords.length}
+    Writable: ${tagData.isWritable ? 'Yes' : 'No'}
+    Size: ${tagData.maxSize || 0} bytes
     
-    Alert.alert('🔍 Tag Analysis', details);
-  };
+    📄 NDEF Data:
+    ${tagData.ndefRecords.map((record, i) => 
+      `${i + 1}. ${record.payload || '(empty)'}`
+    ).join('\n')}`;
+      
+      Alert.alert('🔍 Tag Analysis', details);
+    };
 
-  const handleExploitPress = () => {
-    Alert.alert(
-      '⚡ Coming Soon',
-      'Exploit features will be available in the next update. Focus on protection first!',
-      [{ text: 'OK' }]
+    const handleExploitPress = () => {
+      Alert.alert(
+        '⚡ Coming Soon',
+        'Exploit features will be available in the next update. Focus on protection first!',
+        [{ text: 'OK' }]
     );
   };
 
@@ -223,13 +222,25 @@ export default function HomePage() {
           {/* Feature Cards */}
           <View style={styles.featuresContainer}>
             <FeatureCard
-              title={isScanning ? "🔄 Scanning..." : "🛡️ Protect NFC"}
-              subtitle={isScanning ? "Analyzing NFC tag for threats..." : "Secure your NFC cards from unauthorized access and cloning"}
+              title={isScanning ? "🔄 Scanning..." : "🛡️ HI NFC"}
+              subtitle={isScanning ? "Analysing NFC tag" : "We love security"}
               icon={isScanning ? "refresh" : "shield-checkmark"}
               color={['#4facfe', '#00f2fe']}
               onPress={handleProtectPress}
               delay={300}
               disabled={isScanning || !nfcInitialized}
+            />
+
+            {/* 🔥 ADxD THIS NEW FEATURE CARD */}
+            <FeatureCard
+              title="🚨 Cloning Demo"
+              subtitle="Demo on NFC card cloning"
+              icon="copy"
+              color={['#f093fb', '#f5576c']}
+              onPress={() => router.push('/cloning-demo')}
+              delay={450}
+              // disabled={!nfcInitialized}
+              disabled={false}
             />
 
             <FeatureCard
@@ -241,7 +252,40 @@ export default function HomePage() {
               delay={600}
               disabled={true}
             />
+            // Add this to your app/(tabs)/index.tsx in the JSX
+<TouchableOpacity
+  style={{
+    backgroundColor: '#ff4444',
+    padding: 15,
+    margin: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  }}
+  onPress={async () => {
+    try {
+      console.log('Testing NFC...');
+      const initialized = await nfcManager.initialize();
+      console.log('NFC initialized:', initialized);
+      
+      const available = await nfcManager.isNFCAvailable();
+      console.log('NFC available:', available);
+      
+      Alert.alert(
+        'NFC Debug',
+        `Initialized: ${initialized}\nAvailable: ${available}`,
+        [{ text: 'OK' }]
+      );
+    } catch (error : any) {
+      console.error('NFC test error:', error);
+      Alert.alert('NFC Error', error.message);
+    }
+  }}
+>
+  <Text style={{ color: 'white', fontWeight: 'bold' }}>TEST NFC DEBUG</Text>
+</TouchableOpacity>
+            
           </View>
+
 
           {/* Last Scan Result */}
           {lastScanResult && (

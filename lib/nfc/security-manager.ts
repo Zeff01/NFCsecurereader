@@ -31,9 +31,9 @@ export class SecurityManager {
       };
     }
 
-    // ✅ Now properly typed - no more 'any' type!
+    // ✅ FIXED: Since payload is now a string, just check if it's empty or contains "error"
     const hasErrorRecords = tagData.ndefRecords.some(record => 
-      record.payload?.type === 'error'
+      !record.payload || record.payload.includes('error') || record.payload.includes('Error')
     );
 
     if (hasErrorRecords) {

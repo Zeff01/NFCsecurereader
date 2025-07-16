@@ -5,8 +5,10 @@ import { LoggingManager } from './logging-manager';
 import { NFCTagData, ThreatReport, NFCAccessLog } from './types';
 import * as Crypto from 'expo-crypto';
 
-// Export all types from the central types file
+// Export types from types.ts
 export { NFCTagData, ThreatReport, NFCAccessLog, ParsedPayload, NDEFRecord } from './types';
+
+// Export cloning demo types
 
 class NFCManager {
   private core = new CoreNFCManager();
@@ -129,10 +131,68 @@ class NFCManager {
   }
 
   /**
+   * CLONING DEMONSTRATION METHODS
+   * These methods demonstrate vulnerabilities - NOT for production use
+   */
+  
+  // /**
+  //  * Demo Step 1: Extract data from legitimate card
+  //  */
+  // async demoExtractCardData(): Promise<ClonedCardData> {
+  //   console.log('🚨 STARTING CLONING DEMO - Step 1: Extract Card Data');
+  //   return await this.cloningDemo.extractCardData();
+  // }
+
+  // /**
+  //  * Demo Step 2: Prepare clone payload
+  //  */
+  // async demoPrepareClone(originalUID: string): Promise<any> {
+  //   console.log('🚨 CLONING DEMO - Step 2: Prepare Clone Payload');
+  //   return await this.cloningDemo.prepareClonePayload(originalUID);
+  // }
+
+  // /**
+  //  * Demo Step 3: Write clone to blank tag
+  //  */
+  // async demoWriteClone(clonePayload: any): Promise<CloneResult> {
+  //   console.log('🚨 CLONING DEMO - Step 3: Write Clone to Blank Tag');
+  //   return await this.cloningDemo.writeCloneToBlankTag(clonePayload);
+  // }
+
+  // /**
+  //  * Demo Step 4: Test cloned card
+  //  */
+  // async demoTestClone(): Promise<{isClone: boolean, canAccess: boolean, details: any}> {
+  //   console.log('🚨 CLONING DEMO - Step 4: Test Cloned Card');
+  //   return await this.cloningDemo.testClonedCard();
+  // }
+
+  // /**
+  //  * Get demo data for analysis
+  //  */
+  // getDemoData(): ClonedCardData[] {
+  //   return this.cloningDemo.getStoredCardData();
+  // }
+
+  // /**
+  //  * Clear demo data
+  //  */
+  // clearDemoData(): void {
+  //   this.cloningDemo.clearDemoData();
+  // }
+
+  /**
    * Cleanup resources
    */
   async cleanup(): Promise<void> {
     return await this.core.cleanup();
+  }
+
+  /**
+ * Write text data to NFC tag
+ */
+  async writeNFCTag(textData: string[]): Promise<void> {
+    return await this.core.writeNFCTag(textData);
   }
 }
 

@@ -1,3 +1,5 @@
+
+
 {
   "expo": {
     "plugins": [
@@ -6,19 +8,10 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "This app uses NFC to read secure tags.",
-          "selectIdentifiers": ["A0000002471001"],
-          "systemCodes": ["8008"]
+          "nfcPermission": "This app uses NFC to read tags."
         }
       ]
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.nfcsecurereader.app",
-      "infoPlist": {
-        "NFCReaderUsageDescription": "This app uses NFC to read secure tags."
-      }
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
