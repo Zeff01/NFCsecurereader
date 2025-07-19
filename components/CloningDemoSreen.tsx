@@ -1,4 +1,4 @@
-// components/SecureCloningDemoScreen.tsx - Enhanced with security features
+// components/CloningDemoScreen.tsx 
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
@@ -7,7 +7,7 @@ import { simpleSecureNFCManager } from '../lib/nfc/simple-secure-manager';
 import { SecurityManager } from '../lib/nfc/security-manager';
 import type { ClonedCardData, CloneResult } from '../lib/nfc/types';
 
-const SecureCloningDemoScreen = () => {
+const CloningDemoScreen = () => {
 const [currentStep, setCurrentStep] = useState(1);
 const [extractedData, setExtractedData] = useState<ClonedCardData | null>(null);
 const [vulnerableResult, setVulnerableResult] = useState<CloneResult | null>(null);
@@ -15,7 +15,6 @@ const [secureResult, setSecureResult] = useState<any>(null);
 const [testResults, setTestResults] = useState<any>(null);
 const [isLoading, setIsLoading] = useState(false);
 
-// Initialize your existing security manager
 const securityManager = new SecurityManager();
 
 const handleStep1 = async () => {
@@ -25,14 +24,14 @@ const handleStep1 = async () => {
   try {
     const isAvailable = await nfcManager.isNFCAvailable();
     if (!isAvailable) {
-      Alert.alert('📱 NFC Not Available', 'NFC is not supported or enabled on this device.');
+      Alert.alert('NFC unavailable');
       return;
     }
 
     Alert.alert(
-      '🔍 Step 1: Scan Original Card',
-      'Hold your device near an NFC tag to extract data...',
-      [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
+      'step 1: scan OG card',
+      'hold card near device',
+      [{ text: 'cancel', onPress: () => setIsLoading(false) }]
     );
 
     const tagData = await nfcManager.readNFCTag();
@@ -65,14 +64,14 @@ const handleStep1 = async () => {
     setCurrentStep(2);
     
     Alert.alert(
-      '✅ Step 1 Complete', 
-      `Original card data extracted!\n\nUID: ${tagData.id}\nType: ${tagData.type}\nContent: ${realContent || 'Empty tag'}`,
-      [{ text: 'Next: Clone Without Security' }]
+      'step 1 complete', 
+      `OG card data extracted!\n\nUID: ${tagData.id}\nType: ${tagData.type}\nContent: ${realContent || 'Empty tag'}`,
+      [{ text: 'next: clone without secure features' }]
     );
     
   } catch (error: any) {
-    console.error('Step 1 error:', error);
-    Alert.alert('❌ Scan Error', error.message, [{ text: 'Try Again' }]);
+    console.error('step 1 error:', error);
+    Alert.alert('error', error.message, [{ text: 'try again' }]);
   } finally {
     setIsLoading(false);
   }
@@ -80,17 +79,17 @@ const handleStep1 = async () => {
 
 const handleStep2 = async () => {
   if (!extractedData) {
-    Alert.alert('Error', 'No extracted data found. Please complete Step 1 first.');
+    Alert.alert('error');
     return;
   }
 
   setIsLoading(true);
   try {
-    console.log('Starting Step 2: Vulnerable Clone');
+    console.log('start step 2: vulnerable clone');
     
     Alert.alert(
-      '⚠️ Step 2: Clone Without Security',
-      'Writing unprotected clone to blank NFC tag...',
+      'step 2: clone without security',
+      '',
       [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
     );
 
@@ -105,7 +104,7 @@ const handleStep2 = async () => {
     
     const result: CloneResult = {
       success: true,
-      message: '⚠️ Vulnerable clone created! This tag has NO security protection.',
+      message: 'vulnerable clone created! tag has no protection.',
       clonedData: extractedData
     };
     
@@ -113,19 +112,19 @@ const handleStep2 = async () => {
     setCurrentStep(3);
     
     Alert.alert(
-      '⚠️ Step 2 Complete', 
-      `Vulnerable clone created successfully!\n\n` +
-      `📋 Cloned Data:\n` +
-      `• Original UID: ${extractedData.originalUID}\n` +
-      `• Content: ${extractedData.extractedData.realContent}\n` +
-      `• Clone ID: ${Date.now()}\n\n` +
-      `⚠️ This clone has no cryptographic protection and can be easily copied.`,
-      [{ text: 'Next: Create Secure Clone' }]
+      'step 2 complete', 
+      `vulnerable clone created\n\n` +
+      `cloned data:\n` +
+      `• original UID: ${extractedData.originalUID}\n` +
+      `• content: ${extractedData.extractedData.realContent}\n` +
+      `• clone ID: ${Date.now()}\n\n` +
+      `clone has no cryptographic protection, can be easily copied.`,
+      [{ text: 'next: create secure clone' }]
     );
     
   } catch (error: any) {
-    console.error('Step 2 error:', error);
-    Alert.alert('❌ Clone Error', `Failed to create vulnerable clone: ${error.message}`);
+    console.error('step 2 error:', error);
+    Alert.alert('clone error', `failed to create vulnerable clone: ${error.message}`);
   } finally {
     setIsLoading(false);
   }
@@ -133,28 +132,28 @@ const handleStep2 = async () => {
 
 const handleStep3 = async () => {
   if (!vulnerableResult?.success) {
-    Alert.alert('Error', 'Please complete Step 2 first.');
+    Alert.alert('error');
     return;
   }
 
   setIsLoading(true);
   try {
-    console.log('Starting Step 3: Secure Clone');
+    console.log('starting step 3: secure clone');
     
     Alert.alert(
-      '🔒 Step 3: Create Secure Clone',
-      'Writing cryptographically protected clone...',
-      [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
+      'step 3: create secure clone',
+      'writing protected clone...',
+      [{ text: 'cancel', onPress: () => setIsLoading(false) }]
     );
 
     // Create secure clone with digital signatures (use shorter data)
     const secureData = `UID:${extractedData?.originalUID?.substring(0, 8)}|SECURE:true`;
     
-    await simpleSecureNFCManager.writeSecureTag(secureData, 'Demo');
+    await simpleSecureNFCManager.writeSecureTag(secureData, 'demo');
     
     const result = {
       success: true,
-      message: '🔒 Secure clone created with cryptographic protection!',
+      message: 'secure clone created with cryptographic protection!',
       hasSignature: true,
       signedAt: new Date().toISOString(),
       originalData: secureData
@@ -164,21 +163,20 @@ const handleStep3 = async () => {
     setCurrentStep(4);
     
     Alert.alert(
-      '🔒 Step 3 Complete', 
-      `Secure clone created!\n\n` +
-      `📋 Original Data: ${secureData}\n` +
-      `🔐 Added Security:\n` +
-      `• Digital signature with SHA-256\n` +
-      `• Timestamp validation\n` +
-      `• Behavioral monitoring\n` +
-      `• Tamper detection\n\n` +
-      `✅ This tag is cryptographically protected!`,
-      [{ text: 'Next: Test Security' }]
+      'step 3 complete', 
+      `secure clone created!\n\n` +
+      `original data: ${secureData}\n` +
+      `added security:\n` +
+      `• digital signature with SHA-256\n` +
+      `• timestamp validation\n` +
+      `• behavioural monitoring\n` +
+      `tag is cryptographically protected!`,
+      [{ text: 'next: test security' }]
     );
     
   } catch (error: any) {
-    console.error('Step 3 error:', error);
-    Alert.alert('❌ Security Error', `Failed to create secure clone: ${error.message}`);
+    console.error('step 3 error:', error);
+    Alert.alert('error', `failed to create secure clone: ${error.message}`);
   } finally {
     setIsLoading(false);
   }
@@ -186,22 +184,22 @@ const handleStep3 = async () => {
 
 const handleStep4 = async () => {
   if (!secureResult?.success) {
-    Alert.alert('Error', 'Please complete Step 3 first.');
+    Alert.alert('error');
     return;
   }
 
   setIsLoading(true);
   try {
-    console.log('Starting Step 4: Security Testing');
+    console.log('starting step 4: security test');
     
     Alert.alert(
-      '🧪 Step 4: Test Both Tags',
-      'First, scan the VULNERABLE tag (from Step 2)...',
-      [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
+      'step 4: test both tags',
+      'scan the tag from step 2',
+      [{ text: 'cancel', onPress: () => setIsLoading(false) }]
     );
 
     // Test 1: Read vulnerable tag
-    console.log('Testing vulnerable tag...');
+    console.log('testing vulnerable tag');
     const vulnerableRead = await nfcManager.readNFCTag();
     const vulnerableWorks = vulnerableRead.ndefRecords.some(record => 
       record.payload && record.payload.includes('VULNERABLE_CLONE')
@@ -209,17 +207,17 @@ const handleStep4 = async () => {
 
     // Give user time to switch tags
     Alert.alert(
-      '🔄 Switch Tags',
-      'Now scan the SECURE tag (from Step 3)...',
-      [{ text: 'Continue' }]
+      'switch tags',
+      'scan tag from step 3 (secure one)',
+      [{ text: 'continue' }]
     );
 
     // Small delay for user to switch tags
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Test 2: Read secure tag with real verification
-    console.log('Testing secure tag...');
-    const secureRead = await simpleSecureNFCManager.readSecureTag('Demo');
+    console.log('testing secure tag');
+    const secureRead = await simpleSecureNFCManager.readSecureTag('demo');
     
     // Test 3: Check if behavioral analysis is working by reading the tag multiple times
     // Instead of simulating, we'll check if the security manager actually detected patterns
@@ -246,25 +244,24 @@ const handleStep4 = async () => {
     
     // Show comprehensive results
     Alert.alert(
-      '🎯 Step 4 Complete - Security Test Results',
-      `📱 Vulnerable Tag (${results.vulnerableTagId}...): ${vulnerableWorks ? '🔓 WORKS' : '🔒 BLOCKED'}\n` +
-      `📱 Secure Tag (${results.secureTagId}...): ${secureRead.accessGranted ? '🔓 GRANTED' : '🔒 BLOCKED'}\n` +
-      `✍️ Signature Valid: ${secureRead.securityResult.isValid ? '✅ YES' : '❌ NO'}\n` +
-      `🧠 Security Events: ${secureRead.securityResult.events.length}\n` +
-      `🕒 Processing Time: Much faster!\n\n` +
+      'step 4 complete - test results',
+      `vulnerable tag (${results.vulnerableTagId}...): ${vulnerableWorks ? 'WORKS' : 'BLOCKED'}\n` +
+      `secure tag (${results.secureTagId}...): ${secureRead.accessGranted ? 'GRANTED' : 'BLOCKED'}\n` +
+      `signature valid: ${secureRead.securityResult.isValid ? 'YES' : 'NO'}\n` +
+      `security events: ${secureRead.securityResult.events.length}\n` +
       `${secureRead.accessGranted ? 
-        '✅ Secure tag works but has protection!' : 
-        '⚠️ Security system blocked access!'}`,
+        'secure tag works but has protection!' : 
+        'security system blocked access!'}`,
       [
-        { text: 'View Details', onPress: () => showSecurityDetails(results) },
-        { text: 'Reset Demo', onPress: resetDemo },
-        { text: 'Done' }
+        { text: 'details', onPress: () => showSecurityDetails(results) },
+        { text: 'reset', onPress: resetDemo },
+        { text: 'done' }
       ]
     );
     
   } catch (error: any) {
-    console.error('Step 4 error:', error);
-    Alert.alert('❌ Test Error', `Security testing failed: ${error.message}`);
+    console.error('step 4 error:', error);
+    Alert.alert('error', `security testing failed: ${error.message}`);
   } finally {
     setIsLoading(false);
   }
@@ -277,14 +274,14 @@ const showSecurityDetails = (results: any) => {
   ).join('\n');
 
   Alert.alert(
-    '🔍 Security Analysis Details',
-    `🔐 SIGNATURE VERIFICATION:\n` +
-    `• Valid: ${results.signatureValid ? 'YES' : 'NO'}\n` +
-    `• Expired: ${results.securityEvents.some((e: any) => e.type === 'EXPIRED_SIGNATURE') ? 'YES' : 'NO'}\n\n` +
-    `🧠 BEHAVIORAL ANALYSIS:\n` +
-    `• Rapid Access: ${results.behavioralDetection ? 'DETECTED' : 'NORMAL'}\n` +
-    `• Access Pattern: ${results.behavioralDetection ? 'SUSPICIOUS' : 'NORMAL'}\n\n` +
-    `🚨 SECURITY EVENTS:\n${eventDetails || 'No events detected'}`,
+    'security details',
+    `signature verification:\n` +
+    `valid: ${results.signatureValid ? 'YES' : 'NO'}\n` +
+    `expired: ${results.securityEvents.some((e: any) => e.type === 'EXPIRED_SIGNATURE') ? 'YES' : 'NO'}\n\n` +
+    `behavioural analysis:\n` +
+    `rapid access: ${results.behavioralDetection ? 'DETECTED' : 'NORMAL'}\n` +
+    `access pattern: ${results.behavioralDetection ? 'SUSPICIOUS' : 'NORMAL'}\n\n` +
+    `events:\n${eventDetails || 'no events detected'}`,
     [{ text: 'OK' }]
   );
 };
@@ -296,17 +293,12 @@ const resetDemo = async () => {
     setVulnerableResult(null);
     setSecureResult(null);
     setTestResults(null);
-    Alert.alert('🔄 Demo Reset', 'Ready to start security demonstration again!');
+    Alert.alert('reset');
   } catch (error: any) {
-    Alert.alert('❌ Reset Error', `Failed to reset: ${error.message}`);
+    Alert.alert('error', `failed to reset: ${error.message}`);
   }
 };
 
-const getStepStatus = (step: number) => {
-  if (step < currentStep) return '✅';
-  if (step === currentStep) return '🔄';
-  return '⏳';
-};
 
 const getSecuritySummary = () => {
   if (!testResults) return null;
@@ -315,29 +307,29 @@ const getSecuritySummary = () => {
   
   return (
     <View style={styles.summaryContainer}>
-      <Text style={styles.summaryTitle}>🛡️ Security Summary</Text>
+      <Text style={styles.summaryTitle}>security summary</Text>
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Vulnerable Clone:</Text>
+        <Text style={styles.summaryLabel}>vulnerable vlone:</Text>
         <Text style={[styles.summaryValue, { color: vulnerableAccess ? '#f44336' : '#4caf50' }]}>
-          {vulnerableAccess ? '🔓 WORKS' : '🔒 BLOCKED'}
+          {vulnerableAccess ? 'WORKS' : 'BLOCKED'}
         </Text>
       </View>
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Secure Clone:</Text>
         <Text style={[styles.summaryValue, { color: secureAccess ? '#4caf50' : '#f44336' }]}>
-          {secureAccess ? '✅ PROTECTED' : '❌ REJECTED'}
+          {secureAccess ? 'PROTECTED' : 'REJECTED'}
         </Text>
       </View>
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Signature Check:</Text>
         <Text style={[styles.summaryValue, { color: signatureValid ? '#4caf50' : '#f44336' }]}>
-          {signatureValid ? '✅ VALID' : '❌ INVALID'}
+          {signatureValid ? 'VALID' : 'INVALID'}
         </Text>
       </View>
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Behavioral Block:</Text>
         <Text style={[styles.summaryValue, { color: behavioralDetection ? '#ff9800' : '#4caf50' }]}>
-          {behavioralDetection ? '⚠️ DETECTED' : '✅ NORMAL'}
+          {behavioralDetection ? 'DETECTED' : 'NORMAL'}
         </Text>
       </View>
     </View>
@@ -346,23 +338,24 @@ const getSecuritySummary = () => {
 
 return (
   <ScrollView style={styles.container}>
-    <Text style={styles.title}>🔒 Secure NFC Cloning Demo</Text>
+    <Text style={styles.title}>Cloning Demo</Text>
     <Text style={styles.subtitle}>
-      Demonstration of NFC cloning attacks and cryptographic security countermeasures
+      demos an NFC cloning attack and cryptographic security countermeasures 
     </Text>
 
     {/* Step 1: Extract Original Data */}
     <View style={[styles.stepContainer, currentStep === 1 && styles.activeStep]}>
       <Text style={styles.stepTitle}>
-        {getStepStatus(1)} Step 1: Extract Original Card Data
+        {/* {getStepStatus(1)}  */}
+        step 1: extract OG card data
       </Text>
       <Text style={styles.stepDescription}>
-        Scan a legitimate NFC card to extract its credentials
+        scan a legit tag to read its info
       </Text>
       
       {extractedData && (
         <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>✅ Extracted Data:</Text>
+          <Text style={styles.dataTitle}>extracted data:</Text>
           <Text style={styles.dataText}>UID: {extractedData.originalUID}</Text>
           <Text style={styles.dataText}>Type: {extractedData.extractedData.type}</Text>
           <Text style={styles.dataText}>Content: {extractedData.extractedData.realContent}</Text>
@@ -375,7 +368,7 @@ return (
         disabled={currentStep !== 1 || isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading && currentStep === 1 ? 'Scanning...' : 'Scan Original Card'}
+          {isLoading && currentStep === 1 ? 'scanning' : 'scan original card'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -383,23 +376,24 @@ return (
     {/* Step 2: Vulnerable Clone */}
     <View style={[styles.stepContainer, currentStep === 2 && styles.activeStep]}>
       <Text style={styles.stepTitle}>
-        {getStepStatus(2)} Step 2: Create Vulnerable Clone
+        {/* {getStepStatus(2)}  */}
+        step 2: create vulnerable clone
       </Text>
       <Text style={styles.stepDescription}>
-        Create an unprotected clone without security measures
+        create an unprotected clone without security measures
       </Text>
       
       {vulnerableResult && (
         <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>⚠️ Vulnerable Clone Data:</Text>
+          <Text style={styles.dataTitle}>vulnerable clone data:</Text>
           <Text style={[styles.dataText, { color: vulnerableResult.success ? '#ff9800' : 'red' }]}>
-            Status: {vulnerableResult.success ? '⚠️ Clone Created (No Security)' : '❌ Clone Failed'}
+            status: {vulnerableResult.success ? 'clone created (no security)' : 'clone failed'}
           </Text>
-          <Text style={styles.dataText}>Original UID: {extractedData?.originalUID}</Text>
-          <Text style={styles.dataText}>Content: {extractedData?.extractedData.realContent}</Text>
-          <Text style={styles.dataText}>Clone Time: {new Date(extractedData?.clonedAt || '').toLocaleTimeString()}</Text>
+          <Text style={styles.dataText}>original UID: {extractedData?.originalUID}</Text>
+          <Text style={styles.dataText}>content: {extractedData?.extractedData.realContent}</Text>
+          <Text style={styles.dataText}>clone time: {new Date(extractedData?.clonedAt || '').toLocaleTimeString()}</Text>
           <Text style={[styles.dataText, { color: '#f44336', fontWeight: 'bold' }]}>
-            🚨 No cryptographic protection!
+            no protection!
           </Text>
         </View>
       )}
@@ -410,7 +404,7 @@ return (
         disabled={currentStep !== 2 || isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading && currentStep === 2 ? 'Cloning...' : 'Create Vulnerable Clone'}
+          {isLoading && currentStep === 2 ? 'cloning' : 'create vulnerable clone'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -418,29 +412,29 @@ return (
     {/* Step 3: Secure Clone */}
     <View style={[styles.stepContainer, currentStep === 3 && styles.activeStep]}>
       <Text style={styles.stepTitle}>
-        {getStepStatus(3)} Step 3: Create Secure Clone
+        {/* {getStepStatus(3)}  */}
+        step 3: create secure clone
       </Text>
       <Text style={styles.stepDescription}>
-        Create a cryptographically protected clone with digital signatures
+        create a cryptographically protected clone
       </Text>
       
       {secureResult && (
         <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>🔒 Secure Clone Data:</Text>
+          <Text style={styles.dataTitle}>secure clone data:</Text>
           <Text style={[styles.dataText, { color: secureResult.success ? 'green' : 'red' }]}>
-            Status: {secureResult.success ? '✅ Secure Clone Created' : '❌ Secure Clone Failed'}
+            Status: {secureResult.success ? 'secure clone created' : 'secure clone failed'}
           </Text>
-          <Text style={styles.dataText}>Original Data: {secureResult.originalData}</Text>
-          <Text style={styles.dataText}>Signed At: {new Date(secureResult.signedAt).toLocaleTimeString()}</Text>
+          <Text style={styles.dataText}>OG data: {secureResult.originalData}</Text>
+          <Text style={styles.dataText}>sign time: {new Date(secureResult.signedAt).toLocaleTimeString()}</Text>
           {secureResult.hasSignature && (
             <>
               <Text style={[styles.dataText, { color: '#4caf50', fontWeight: 'bold' }]}>
-                🔐 Cryptographic Protection Added:
+                cryptographic protection added:
               </Text>
-              <Text style={styles.dataText}>• SHA-256 Digital Signature</Text>
-              <Text style={styles.dataText}>• Timestamp Validation (5min expiry)</Text>
-              <Text style={styles.dataText}>• Behavioral Pattern Monitoring</Text>
-              <Text style={styles.dataText}>• Tamper Detection</Text>
+              <Text style={styles.dataText}>• SHA-256 digital signature</Text>
+              <Text style={styles.dataText}>• timestamp validation (5min expiry)</Text>
+              <Text style={styles.dataText}>• behavioural pattern</Text>
             </>
           )}
         </View>
@@ -452,7 +446,7 @@ return (
         disabled={currentStep !== 3 || isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading && currentStep === 3 ? 'Securing...' : 'Create Secure Clone'}
+          {isLoading && currentStep === 3 ? 'securing' : 'create secure clone'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -460,40 +454,41 @@ return (
     {/* Step 4: Security Testing */}
     <View style={[styles.stepContainer, currentStep === 4 && styles.activeStep]}>
       <Text style={styles.stepTitle}>
-        {getStepStatus(4)} Step 4: Test Security Features
+        {/* {getStepStatus(4)}  */}
+        step 4: test security
       </Text>
       <Text style={styles.stepDescription}>
-        Test both clones to demonstrate security effectiveness
+        test both clones
       </Text>
       
       {testResults && (
         <View style={styles.dataContainer}>
-          <Text style={styles.dataTitle}>🧪 Security Test Results:</Text>
+          <Text style={styles.dataTitle}>security test results:</Text>
           
-          <Text style={styles.dataText}>📱 Vulnerable Tag Test:</Text>
+          <Text style={styles.dataText}>vulnerable tag:</Text>
           <Text style={[styles.dataText, { color: testResults.vulnerableAccess ? '#f44336' : '#4caf50' }]}>
-            Tag ID: {testResults.vulnerableTagId}...
+            tag ID: {testResults.vulnerableTagId}...
           </Text>
           <Text style={[styles.dataText, { color: testResults.vulnerableAccess ? '#f44336' : '#4caf50' }]}>
-            Access: {testResults.vulnerableAccess ? '🔓 GRANTED (Security Risk!)' : '🔒 DENIED'}
+            access: {testResults.vulnerableAccess ? 'GRANTED (Security Risk!)' : 'DENIED'}
           </Text>
           
           <Text style={[styles.dataText, { marginTop: 10 }]}>🔒 Secure Tag Test:</Text>
           <Text style={[styles.dataText, { color: testResults.secureAccess ? '#4caf50' : '#f44336' }]}>
-            Tag ID: {testResults.secureTagId}...
+            tag ID: {testResults.secureTagId}...
           </Text>
           <Text style={[styles.dataText, { color: testResults.signatureValid ? '#4caf50' : '#f44336' }]}>
-            Signature: {testResults.signatureValid ? '✅ VALID' : '❌ INVALID'}
+            signature: {testResults.signatureValid ? 'VALID' : 'INVALID'}
           </Text>
           <Text style={[styles.dataText, { color: testResults.secureAccess ? '#4caf50' : '#f44336' }]}>
-            Access: {testResults.secureAccess ? '🔓 GRANTED (Protected)' : '🔒 DENIED'}
+            access: {testResults.secureAccess ? 'GRANTED (Protected)' : 'DENIED'}
           </Text>
           <Text style={styles.dataText}>
-            Security Events: {testResults.securityEvents?.length || 0} detected
+            security events: {testResults.securityEvents?.length || 0} detected
           </Text>
           {testResults.behavioralDetection && (
             <Text style={[styles.dataText, { color: '#ff9800', fontWeight: 'bold' }]}>
-              🧠 Behavioral anomaly detected!
+              behavioural anomaly detected
             </Text>
           )}
         </View>
@@ -505,7 +500,7 @@ return (
         disabled={currentStep !== 4 || isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading && currentStep === 4 ? 'Testing...' : 'Test Security Features'}
+          {isLoading && currentStep === 4 ? 'testing' : 'test security features'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -515,98 +510,95 @@ return (
 
     {/* Reset Button */}
     <TouchableOpacity style={styles.resetButton} onPress={resetDemo}>
-      <Text style={styles.buttonText}>🔄 Reset Demo</Text>
+      <Text style={styles.buttonText}>🔄 reset</Text>
     </TouchableOpacity>
 
     {/* Security Information */}
     <View style={styles.infoContainer}>
-      <Text style={styles.infoTitle}>🛡️ Security Features Demonstrated</Text>
+      <Text style={styles.infoTitle}>security featueres shown</Text>
       <Text style={styles.infoText}>
-        <Text style={styles.boldText}>1. Digital Signatures:</Text> Cryptographic proof of authenticity
+        <Text style={styles.boldText}>1. digital signature:</Text> proof of authenticity
       </Text>
       <Text style={styles.infoText}>
-        <Text style={styles.boldText}>2. Timestamp Validation:</Text> Prevents replay attacks
+        <Text style={styles.boldText}>2. timestamp valididty:</Text> prevents replay attacks
       </Text>
       <Text style={styles.infoText}>
-        <Text style={styles.boldText}>3. Behavioral Analysis:</Text> Detects suspicious access patterns
-      </Text>
-      <Text style={styles.infoText}>
-        <Text style={styles.boldText}>4. Device Fingerprinting:</Text> Tracks device-specific patterns
+        <Text style={styles.boldText}>3. behavioural analysis:</Text> detects suspicious access patterns
       </Text>
     </View>
 
     {/* Results Reference Table */}
     <View style={styles.tableContainer}>
-      <Text style={styles.tableTitle}>📊 Results Reference Guide</Text>
+      <Text style={styles.tableTitle}>uide</Text>
       
       <View style={styles.tableSection}>
-        <Text style={styles.tableSectionTitle}>🔓 Vulnerable Tag Results</Text>
+        <Text style={styles.tableSectionTitle}>vulnerable tag</Text>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>WORKS</Text>
-          <Text style={[styles.tableValue, styles.badResult]}>❌ BAD</Text>
-          <Text style={styles.tableDescription}>Cloning attack succeeded</Text>
+          <Text style={[styles.tableValue, styles.badResult]}>BAD</Text>
+          <Text style={styles.tableDescription}>cloning attack successful</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>ACCESS GRANTED</Text>
-          <Text style={[styles.tableValue, styles.badResult]}>❌ BAD</Text>
-          <Text style={styles.tableDescription}>Fake card fooled system</Text>
+          <Text style={[styles.tableValue, styles.badResult]}>BAD</Text>
+          <Text style={styles.tableDescription}>fake card fooled system</Text>
         </View>
       </View>
 
       <View style={styles.tableSection}>
-        <Text style={styles.tableSectionTitle}>🔒 Secure Tag Results</Text>
+        <Text style={styles.tableSectionTitle}>secure tag</Text>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>GRANTED</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Legitimate secure tag works</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>legit secure tag works</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>DENIED/BLOCKED</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Security caught threat</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>security caught threat</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>REJECTED</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Invalid tag detected</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>invalid tag detected</Text>
         </View>
       </View>
 
       <View style={styles.tableSection}>
-        <Text style={styles.tableSectionTitle}>🔐 Signature Results</Text>
+        <Text style={styles.tableSectionTitle}>Signature</Text>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>VALID</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Tag is authentic</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>tag is authentic</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>INVALID</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Fake/tampered tag caught</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>fake tag caught</Text>
         </View>
       </View>
 
       <View style={styles.tableSection}>
-        <Text style={styles.tableSectionTitle}>🧠 Behavioral Analysis</Text>
+        <Text style={styles.tableSectionTitle}>behavioural analysis</Text>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>NORMAL</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>No suspicious activity</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>no suspicious activity</Text>
         </View>
         <View style={styles.tableRow}>
           <Text style={styles.tableKey}>ANOMALY DETECTED</Text>
-          <Text style={[styles.tableValue, styles.goodResult]}>✅ GOOD</Text>
-          <Text style={styles.tableDescription}>Security AI caught threat</Text>
+          <Text style={[styles.tableValue, styles.goodResult]}>GOOD</Text>
+          <Text style={styles.tableDescription}>security caught threat</Text>
         </View>
       </View>
 
       <View style={styles.tableSummary}>
-        <Text style={styles.tableSummaryTitle}>🎯 Ideal Demo Results:</Text>
+        <Text style={styles.tableSummaryTitle}>ideal results:</Text>
         <Text style={styles.tableSummaryText}>
-          🔓 Vulnerable: "WORKS" ❌ (Shows the problem){'\n'}
-          🔒 Secure: "GRANTED" ✅ (Shows solution works){'\n'}
-          🔐 Signature: "VALID" ✅ (Crypto verified){'\n'}
-          🧠 Behavior: "NORMAL" ✅ (Clean access)
+          vulnerable: "WORKS"{'\n'}
+          secure: "GRANTED"{'\n'}
+          signature: "VALID"{'\n'}
+          behavior: "NORMAL"
         </Text>
       </View>
     </View>
@@ -834,4 +826,4 @@ tableSummaryText: {
 },
 });
 
-export default SecureCloningDemoScreen;
+export default CloningDemoScreen;

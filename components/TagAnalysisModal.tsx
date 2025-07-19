@@ -42,137 +42,13 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
 
   if (!tagData) return null;
 
-  const getThreatLevel = () => {
-    if (!tagData.isWritable) return { level: 'LOW', color: '#4CAF50', text: 'read-only tag' };
-    if (tagData.ndefRecords.length === 0) return { level: 'MEDIUM', color: '#FFC107', text: 'empty tag' };
-    return { level: 'HIGH', color: '#F44336', text: 'writable with data' };
-  };
-
-  const threat = getThreatLevel();
-
-  // const handleEnableReadProtection = async () => {
-  //   setIsProtecting(true);
-  //   try {
-  //     await nfcManager.enableReadProtection();
-  //     setProtectionStatus(prev => ({ ...prev, readProtection: true }));
-  //     Alert.alert('✅ Success', 'Read protection enabled! Unauthorized access attempts will be blocked.');
-  //   } catch (error) {
-  //     Alert.alert('❌ Error', 'Failed to enable read protection');
-  //   } finally {
-  //     setIsProtecting(false);
-  //   }
-  // };
-
-  // const handleEnableWriteProtection = async () => {
-  //   if (!tagData.isWritable) {
-  //     Alert.alert('ℹ️ Info', 'This tag is already read-only');
-  //     return;
-  //   }
-
-  //   Alert.alert(
-  //     '⚠️ Confirm Write Protection',
-  //     'This will make the tag permanently read-only. This action cannot be undone. Continue?',
-  //     [
-  //       { text: 'Cancel', style: 'cancel' },
-  //       {
-  //         text: 'Enable Protection',
-  //         style: 'destructive',
-  //         onPress: async () => {
-  //           setIsProtecting(true);
-  //           try {
-  //             await nfcManager.enableWriteProtection();
-  //             setProtectionStatus(prev => ({ ...prev, writeProtection: true }));
-  //             Alert.alert('✅ Success', 'Write protection enabled! Tag is now read-only.');
-  //           } catch (error) {
-  //             Alert.alert('❌ Error', 'Failed to enable write protection');
-  //           } finally {
-  //             setIsProtecting(false);
-  //           }
-  //         }
-  //       }
-  //     ]
-  //   );
-  // };
-
-  // const handleEnableCloningProtection = async () => {
-  //   setIsProtecting(true);
-  //   try {
-  //     await nfcManager.enableCloningProtection();
-  //     setProtectionStatus(prev => ({ ...prev, cloningProtection: true }));
-  //     Alert.alert('✅ Success', 'Cloning protection enabled! Tag cloning attempts will be detected.');
-  //   } catch (error) {
-  //     Alert.alert('❌ Error', 'Failed to enable cloning protection');
-  //   } finally {
-  //     setIsProtecting(false);
-  //   }
-  // };
-
-  // const handleCreateSecureBackup = async () => {
-  //   setIsProtecting(true);
-  //   try {
-  //     const backup = await nfcManager.generateSecureBackup(tagData);
-  //     setProtectionStatus(prev => ({ ...prev, backupCreated: true }));
-  //     Alert.alert(
-  //       '✅ Backup Created',
-  //       'Secure encrypted backup of tag data has been created and stored locally.',
-  //       [
-  //         { text: 'OK' },
-  //         { text: 'View Backup', onPress: () => console.log('Show backup:', backup) }
-  //       ]
-  //     );
-  //   } catch (error) {
-  //     Alert.alert('❌ Error', 'Failed to create backup');
-  //   } finally {
-  //     setIsProtecting(false);
-  //   }
-  // };
-
-  // const protectionActions = [
-  //   {
-  //     id: 'read',
-  //     title: 'Enable Read Protection',
-  //     description: 'Prevent unauthorized reading of tag data',
-  //     icon: 'eye-off' as const,
-  //     color: '#4facfe',
-  //     enabled: !protectionStatus.readProtection,
-  //     action: handleEnableReadProtection,
-  //   },
-  //   {
-  //     id: 'write',
-  //     title: 'Enable Write Protection',
-  //     description: 'Make tag permanently read-only',
-  //     icon: 'lock-closed' as const,
-  //     color: '#fa709a',
-  //     enabled: tagData.isWritable && !protectionStatus.writeProtection,
-  //     action: handleEnableWriteProtection,
-  //   },
-  //   {
-  //     id: 'cloning',
-  //     title: 'Enable Cloning Protection',
-  //     description: 'Detect and prevent tag cloning attempts',
-  //     icon: 'shield-checkmark' as const,
-  //     color: '#667eea',
-  //     enabled: !protectionStatus.cloningProtection,
-  //     action: handleEnableCloningProtection,
-  //   },
-  //   {
-  //     id: 'backup',
-  //     title: 'Create Secure Backup',
-  //     description: 'Generate encrypted backup of tag data',
-  //     icon: 'cloud-upload' as const,
-  //     color: '#4CAF50',
-  //     enabled: !protectionStatus.backupCreated,
-  //     action: handleCreateSecureBackup,
-  //   },
-  // ];
-
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.container}
       >
-        {/* Header */}
+
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Ionicons name="close" size={24} color="#fff" />
@@ -182,19 +58,7 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Threat Assessment */}
-          <Animatable.View animation="fadeInUp" style={styles.threatCard}>
-            <View style={styles.threatHeader}>
-              <Ionicons name="warning" size={24} color={threat.color} />
-              <Text style={styles.threatTitle}>Security Assessment</Text>
-            </View>
-            <View style={[styles.threatBadge, { backgroundColor: threat.color }]}>
-              <Text style={styles.threatBadgeText}>{threat.level} RISK</Text>
-            </View>
-            <Text style={styles.threatDescription}>{threat.text}</Text>
-          </Animatable.View>
 
-          {/* Tag Information */}
           <Animatable.View animation="fadeInUp" delay={200} style={styles.infoCard}>
             <Text style={styles.cardTitle}>📱 Tag Information</Text>
             <View style={styles.infoGrid}>
@@ -223,75 +87,7 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
             </Animatable.View>
           )}
 
-          {/* Protection Actions */}
-          {/* <Animatable.View animation="fadeInUp" delay={600} style={styles.actionsCard}>
-            <Text style={styles.cardTitle}>🛡️ Protection Actions</Text>
-            <Text style={styles.actionsSubtitle}>
-              Select protection measures to secure this NFC tag
-            </Text> */}
-            
-            {/* {protectionActions.map((action, index) => (
-              <TouchableOpacity
-                key={action.id}
-                style={[
-                  styles.actionButton,
-                  !action.enabled && styles.actionButtonDisabled
-                ]}
-                onPress={action.action}
-                disabled={!action.enabled || isProtecting}
-              >
-                <LinearGradient
-                  colors={action.enabled ? [action.color, `${action.color}CC`] : ['#ccc', '#aaa']}
-                  style={styles.actionGradient}
-                >
-                  <View style={styles.actionContent}>
-                    <View style={styles.actionIcon}>
-                      <Ionicons 
-                        name={action.enabled ? action.icon : 'checkmark-circle'} 
-                        size={24} 
-                        color="#fff" 
-                      />
-                    </View>
-                    <View style={styles.actionText}>
-                      <Text style={styles.actionTitle}>
-                        {action.enabled ? action.title : `${action.title} ✓`}
-                      </Text>
-                      <Text style={styles.actionDescription}>
-                        {action.enabled ? action.description : 'Protection enabled'}
-                      </Text>
-                    </View>
-                    {isProtecting && (
-                      <ActivityIndicator color="#fff" size="small" />
-                    )}
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))} */}
-          {/* </Animatable.View> */}
-
-          {/* Quick Actions */}
-          {/* <Animatable.View animation="fadeInUp" delay={800} style={styles.quickActions}>
-            <TouchableOpacity 
-              style={styles.quickAction}
-              onPress={() => {
-                Alert.alert('rescan');
-                onClose();
-              }}
-            >
-              <Ionicons name="refresh" size={20} color="#667eea" />
-              <Text style={styles.quickActionText}>Rescan Tag</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.quickAction}
-              onPress={() => {
-                Alert.alert('📋 export data');
-              }}
-            > */}
-              {/* <Ionicons name="share" size={20} color="#667eea" />
-              <Text style={styles.quickActionText}>Export Data</Text>
-            </TouchableOpacity> */}
-          {/* </Animatable.View> */}
+        
         </ScrollView>
       </LinearGradient>
     </Modal>
@@ -305,7 +101,7 @@ const InfoItem: React.FC<{ label: string; value: string }> = ({ label, value }) 
   </View>
 );
 
-// Styles remain the same as before
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

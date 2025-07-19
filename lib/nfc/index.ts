@@ -1,204 +1,260 @@
-// lib/nfc/index.ts - Main NFC Manager
-import { CoreNFCManager } from './core-manager';
+
+// lib/nfc/index.ts
+import NfcManager, { NfcTech, TagEvent } from 'react-native-nfc-manager';
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 import { SecurityManager } from './security-manager';
-import { LoggingManager } from './logging-manager';
-import { NFCTagData, ThreatReport, NFCAccessLog } from './types';
-import * as Crypto from 'expo-crypto';
+import { NFCTagData, NDEFRecord } from './types';
 export { simpleSecureNFCManager } from './simple-secure-manager';
-// export { nfcManager } from './core-manager';
-
-// export * from './types';
-
-// Export types from types.ts
-export { NFCTagData, ThreatReport, NFCAccessLog, ParsedPayload, NDEFRecord } from './types';
-
-// Export cloning demo types
+export { NFCTagData, ThreatReport, NDEFRecord } from './types';
 
 class NFCManager {
-  private core = new CoreNFCManager();
+  private isInitialized = false;
+  private isReading = false;
   private security = new SecurityManager();
-  private logging = new LoggingManager();
 
-  /**
-   * Initialize NFC Manager
-   */
-  async initialize(): Promise<boolean> {
-    return await this.core.initialize();
-  }
-
-  /**
-   * Check if NFC is available on this device
-   */
-  async isNFCAvailable(): Promise<boolean> {
-    return await this.core.isNFCAvailable();
-  }
-
-  /**
-   * Read an NFC tag with security analysis
-   */
-  async readNFCTag(): Promise<NFCTagData> {
-    const startTime = Date.now();
-    
+  async initialise(): Promise<boolean> {
     try {
-      // Read the tag
-      const tagData = await this.core.readNFCTag();
+      if (this.isInitialized) return true;
       
-      // Perform security analysis
-      const threatReport = await this.security.performThreatDetection(tagData);
-      
-      // Block if threat detected and marked as blocked
-      if (threatReport?.blocked) {
-        await this.logging.logThreatReport(threatReport);
-        throw new Error(`Security threat detected: ${threatReport.description}`);
-      }
+      const isSupported = await NfcManager.isSupported();
+      if (!isSupported) return false;
 
-      // Log the access
-      const readDuration = Date.now() - startTime;
-      const accessLog: NFCAccessLog = {
-        tagId: tagData.id,
-        timestamp: tagData.timestamp,
-        techTypes: tagData.techTypes,
-        hasNdefData: tagData.ndefRecords.length > 0,
-        readDuration,
-        securityLevel: this.security.assessSecurityLevel(tagData),
-        threatDetected: !!threatReport,
-      };
-
-      await this.logging.logNFCAccess(accessLog);
-
-      // Log threat if detected but not blocked
-      if (threatReport && !threatReport.blocked) {
-        await this.logging.logThreatReport(threatReport);
-      }
-
-      return tagData;
+      await NfcManager.start();
+      this.isInitialized = true;
+      console.log('NFC Manager initialised');
+      return true;
     } catch (error) {
-      // Log failed attempts too
-      const readDuration = Date.now() - startTime;
-      console.error('NFC read failed after', readDuration + 'ms:', error);
-      throw error;
+      console.error('NFC initialisation failed:', error);
+      return false;
     }
   }
 
-  /**
-   * Security Features
-   */
-  async enableReadProtection(): Promise<void> {
-    return await this.security.enableReadProtection();
+  async isNFCAvailable(): Promise<boolean> {
+    try {
+      if (!this.isInitialized) {
+        const initialized = await this.initialise();
+        if (!initialized) return false;
+      }
+
+      const isSupported = await NfcManager.isSupported();
+      
+      if (Platform.OS === 'android') {
+        const isEnabled = await NfcManager.isEnabled();
+        return isSupported && isEnabled;
+      }
+      
+      return isSupported;
+    } catch (error) {
+      console.warn('error checking NFC availability:', error);
+      return false;
+    }
   }
 
-  async enableWriteProtection(): Promise<void> {
-    return await this.security.enableWriteProtection();
+  async readNFCTag(): Promise<NFCTagData> {
+    if (!this.isInitialized) {
+      throw new Error('NFC Manager not initialised');
+    }
+
+    if (this.isReading) {
+      throw new Error('NFC read already in progress');
+    }
+
+    this.isReading = true;
+
+    try {
+      if (Platform.OS === 'ios') {
+        await NfcManager.requestTechnology([NfcTech.Ndef], {
+          alertMessage: 'hold iPhone near the NFC tag',
+          invalidateAfterFirstRead: true,
+        });
+      } else {
+        await NfcManager.requestTechnology([NfcTech.Ndef]);
+      }
+
+      const tag = await NfcManager.getTag();
+      
+      if (!tag) {
+        throw new Error('no tag detected');
+      }
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      const tagData = await this.parseTagData(tag);
+
+      // Perform security analysis
+      const threatReport = await this.security.performThreatDetection(tagData);
+      
+      // Log threats but don't block (let demos handle it)
+      if (threatReport?.blocked) {
+        console.warn('threat blocked:', threatReport.description);
+      } else if (threatReport) {
+        console.warn('threat detected:', threatReport.description);
+      }
+
+      return tagData;
+
+    } finally {
+      this.isReading = false;
+      try {
+        await NfcManager.cancelTechnologyRequest();
+      } catch (error) {
+        console.warn('error canceling NFC request:', error);
+      }
+    }
   }
 
-  async enableCloningProtection(): Promise<void> {
-    return await this.security.enableCloningProtection();
+
+  async writeNFCTag(textData: string[]): Promise<void> {
+    if (!this.isInitialized) {
+      throw new Error('NFC Manager not initialised');
+    }
+
+    if (this.isReading) {
+      throw new Error('NFC operation in progress');
+    }
+
+    this.isReading = true;
+
+    try {
+      if (Platform.OS === 'ios') {
+        await NfcManager.requestTechnology([NfcTech.Ndef], {
+          alertMessage: 'hold your iPhone near the NFC tag to write',
+          invalidateAfterFirstRead: true,
+        });
+      } else {
+        await NfcManager.requestTechnology([NfcTech.Ndef]);
+      }
+
+      // create NDEF message bytes
+      const ndefMessageBytes: number[] = [];
+      
+      textData.forEach((text, index) => {
+        const langCode = 'en';
+        const langCodeBytes = new TextEncoder().encode(langCode);
+        const textBytes = new TextEncoder().encode(text);
+      
+        const payload = new Uint8Array(1 + langCodeBytes.length + textBytes.length);
+        payload[0] = langCodeBytes.length;
+        payload.set(langCodeBytes, 1);
+        payload.set(textBytes, 1 + langCodeBytes.length);
+
+        let flags = 0x01;
+        if (index === 0) flags |= 0x80; 
+        if (index === textData.length - 1) flags |= 0x40; 
+        if (payload.length < 256) flags |= 0x10; 
+
+        ndefMessageBytes.push(flags);
+        ndefMessageBytes.push(0x01); 
+        ndefMessageBytes.push(payload.length); 
+        ndefMessageBytes.push(0x54);
+        ndefMessageBytes.push(...Array.from(payload));
+      });
+
+
+      await NfcManager.ndefHandler.writeNdefMessage(ndefMessageBytes);
+      
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('NFC write successful');
+
+    } finally {
+      this.isReading = false;
+      try {
+        await NfcManager.cancelTechnologyRequest();
+      } catch (error) {
+        console.warn('error');
+      }
+    }
+  }
+
+  private async parseTagData(tag: TagEvent): Promise<NFCTagData> {
+    const tagId = this.getTagId(tag.id);
+    const techTypes = tag.techTypes || ['NDEF'];
+    
+    let ndefRecords: NDEFRecord[] = [];
+
+    try {
+      const ndefMessage = await NfcManager.ndefHandler.getNdefMessage();
+      if (ndefMessage?.ndefMessage && Array.isArray(ndefMessage.ndefMessage)) {
+        ndefRecords = ndefMessage.ndefMessage.map((record: any, index: number) => ({
+          id: `record_${index}`,
+          type: 'T', 
+          payload: this.parsePayload(record.payload),
+          tnf: 1,
+        }));
+      }
+    } catch (error) {
+      console.warn('error reading NDEF:', error);
+    }
+
+    return {
+      id: tagId,
+      techTypes,
+      type: 'DEMO_TAG',
+      maxSize: 1000,
+      isWritable: true,
+      canMakeReadOnly: false,
+      ndefRecords,
+      rawData: tag,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private getTagId(id: any): string {
+    if (!id) return 'DEMO_TAG_' + Date.now();
+    
+    if (typeof id === 'string') {
+      return id.toUpperCase();
+    }
+    
+    if (Array.isArray(id)) {
+      return id
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+    }
+    return 'DEMO_TAG_' + Date.now();
+  }
+
+  private parsePayload(payload: any): string {
+    if (!payload) return '';
+    
+    try {
+      if (typeof payload === 'string') return payload;
+      
+      if (Array.isArray(payload)) {
+        const textBytes = payload.slice(3);
+        return String.fromCharCode(...textBytes);
+      }
+      
+      return String(payload);
+    } catch (error) {
+      return 'error';
+    }
   }
 
   async enableThreatDetection(enabled: boolean): Promise<void> {
     this.security.enableThreatDetection(enabled);
   }
 
-  /**
-   * Generate encrypted backup of tag data
-   */
-  async generateSecureBackup(tagData: NFCTagData): Promise<string> {
-    const backup = {
-      tagData,
-      timestamp: new Date().toISOString(),
-      signature: await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        JSON.stringify(tagData) + Date.now()
-      )
-    };
-    
-    return JSON.stringify(backup);
+  getThreatAttempts(tagId: string): number {
+    return 0;
   }
 
-  /**
-   * Logging & Analytics
-   */
-  async getAccessLogs(): Promise<NFCAccessLog[]> {
-    return await this.logging.getAccessLogs();
+  resetThreatDetection(): void {
   }
 
-  async getThreatReports(): Promise<ThreatReport[]> {
-    return await this.logging.getThreatReports();
-  }
-
-  async clearAccessLogs(): Promise<void> {
-    return await this.logging.clearAccessLogs();
-  }
-
-  async clearThreatReports(): Promise<void> {
-    return await this.logging.clearThreatReports();
-  }
-
-  /**
-   * CLONING DEMONSTRATION METHODS
-   * These methods demonstrate vulnerabilities - NOT for production use
-   */
-  
-  // /**
-  //  * Demo Step 1: Extract data from legitimate card
-  //  */
-  // async demoExtractCardData(): Promise<ClonedCardData> {
-  //   console.log('🚨 STARTING CLONING DEMO - Step 1: Extract Card Data');
-  //   return await this.cloningDemo.extractCardData();
-  // }
-
-  // /**
-  //  * Demo Step 2: Prepare clone payload
-  //  */
-  // async demoPrepareClone(originalUID: string): Promise<any> {
-  //   console.log('🚨 CLONING DEMO - Step 2: Prepare Clone Payload');
-  //   return await this.cloningDemo.prepareClonePayload(originalUID);
-  // }
-
-  // /**
-  //  * Demo Step 3: Write clone to blank tag
-  //  */
-  // async demoWriteClone(clonePayload: any): Promise<CloneResult> {
-  //   console.log('🚨 CLONING DEMO - Step 3: Write Clone to Blank Tag');
-  //   return await this.cloningDemo.writeCloneToBlankTag(clonePayload);
-  // }
-
-  // /**
-  //  * Demo Step 4: Test cloned card
-  //  */
-  // async demoTestClone(): Promise<{isClone: boolean, canAccess: boolean, details: any}> {
-  //   console.log('🚨 CLONING DEMO - Step 4: Test Cloned Card');
-  //   return await this.cloningDemo.testClonedCard();
-  // }
-
-  // /**
-  //  * Get demo data for analysis
-  //  */
-  // getDemoData(): ClonedCardData[] {
-  //   return this.cloningDemo.getStoredCardData();
-  // }
-
-  // /**
-  //  * Clear demo data
-  //  */
-  // clearDemoData(): void {
-  //   this.cloningDemo.clearDemoData();
-  // }
-
-  /**
-   * Cleanup resources
-   */
   async cleanup(): Promise<void> {
-    return await this.core.cleanup();
-  }
-
-  /**
- * Write text data to NFC tag
- */
-  async writeNFCTag(textData: string[]): Promise<void> {
-    return await this.core.writeNFCTag(textData);
+    try {
+      if (this.isReading) {
+        await NfcManager.cancelTechnologyRequest();
+      }
+      this.isInitialized = false;
+      console.log('cleaned');
+    } catch (error) {
+      console.warn('error during cleanup:', error);
+    }
   }
 }
 
-// Export singleton instance
 export const nfcManager = new NFCManager();

@@ -1,5 +1,4 @@
-// lib/nfc/types.ts - Proper TypeScript interfaces
-
+// lib/nfc/types.ts - Cleaned TypeScript interfaces
 export type ParsedPayload = string;
 
 export interface NDEFRecord {
@@ -21,27 +20,16 @@ export interface NFCTagData {
   timestamp: string;
 }
 
-export interface NFCAccessLog {
-  tagId: string;
-  timestamp: string;
-  techTypes: string[];
-  hasNdefData: boolean;
-  readDuration: number;
-  securityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
-  threatDetected: boolean;
-}
-
 export interface ThreatReport {
   id: string;
   timestamp: string;
-  threatType: 'CLONING_ATTEMPT' | 'UNAUTHORIZED_READ' | 'SUSPICIOUS_PATTERN' | 'MALFORMED_DATA';
+  threatType: 'CLONING_ATTEMPT' | 'UNAUTHORISED_READ' | 'SUSPICIOUS_PATTERN';
   severity: 'HIGH' | 'MEDIUM' | 'LOW';
   description: string;
   tagId?: string;
   blocked: boolean;
 }
 
-// Updated interface - removed simulated fields
 export interface ClonedCardData {
   originalUID: string;
   extractedData: {
@@ -55,7 +43,6 @@ export interface ClonedCardData {
     isWritable?: boolean;
   };
   clonedAt: string;
-  // Removed accessLevel and userInfo - they were simulated
 }
 
 export interface CloneResult {
@@ -63,14 +50,4 @@ export interface CloneResult {
   message: string;
   clonedData?: ClonedCardData;
   error?: string;
-}
-
-export interface NFCAccessLog {
-  tagId: string;
-  timestamp: string;
-  techTypes: string[];
-  hasNdefData: boolean;
-  readDuration: number;
-  securityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
-  threatDetected: boolean;
 }
