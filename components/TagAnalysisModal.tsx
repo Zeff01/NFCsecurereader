@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
-// 🔥 NEW CLEAN IMPORT
+
 import { NFCTagData, nfcManager } from '@/lib/nfc';
 
 interface TagAnalysisModalProps {
@@ -43,128 +43,128 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
   if (!tagData) return null;
 
   const getThreatLevel = () => {
-    if (!tagData.isWritable) return { level: 'LOW', color: '#4CAF50', text: 'Read-Only Tag' };
-    if (tagData.ndefRecords.length === 0) return { level: 'MEDIUM', color: '#FFC107', text: 'Empty Tag' };
-    return { level: 'HIGH', color: '#F44336', text: 'Writable with Data' };
+    if (!tagData.isWritable) return { level: 'LOW', color: '#4CAF50', text: 'read-only tag' };
+    if (tagData.ndefRecords.length === 0) return { level: 'MEDIUM', color: '#FFC107', text: 'empty tag' };
+    return { level: 'HIGH', color: '#F44336', text: 'writable with data' };
   };
 
   const threat = getThreatLevel();
 
-  const handleEnableReadProtection = async () => {
-    setIsProtecting(true);
-    try {
-      await nfcManager.enableReadProtection();
-      setProtectionStatus(prev => ({ ...prev, readProtection: true }));
-      Alert.alert('✅ Success', 'Read protection enabled! Unauthorized access attempts will be blocked.');
-    } catch (error) {
-      Alert.alert('❌ Error', 'Failed to enable read protection');
-    } finally {
-      setIsProtecting(false);
-    }
-  };
+  // const handleEnableReadProtection = async () => {
+  //   setIsProtecting(true);
+  //   try {
+  //     await nfcManager.enableReadProtection();
+  //     setProtectionStatus(prev => ({ ...prev, readProtection: true }));
+  //     Alert.alert('✅ Success', 'Read protection enabled! Unauthorized access attempts will be blocked.');
+  //   } catch (error) {
+  //     Alert.alert('❌ Error', 'Failed to enable read protection');
+  //   } finally {
+  //     setIsProtecting(false);
+  //   }
+  // };
 
-  const handleEnableWriteProtection = async () => {
-    if (!tagData.isWritable) {
-      Alert.alert('ℹ️ Info', 'This tag is already read-only');
-      return;
-    }
+  // const handleEnableWriteProtection = async () => {
+  //   if (!tagData.isWritable) {
+  //     Alert.alert('ℹ️ Info', 'This tag is already read-only');
+  //     return;
+  //   }
 
-    Alert.alert(
-      '⚠️ Confirm Write Protection',
-      'This will make the tag permanently read-only. This action cannot be undone. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Enable Protection',
-          style: 'destructive',
-          onPress: async () => {
-            setIsProtecting(true);
-            try {
-              await nfcManager.enableWriteProtection();
-              setProtectionStatus(prev => ({ ...prev, writeProtection: true }));
-              Alert.alert('✅ Success', 'Write protection enabled! Tag is now read-only.');
-            } catch (error) {
-              Alert.alert('❌ Error', 'Failed to enable write protection');
-            } finally {
-              setIsProtecting(false);
-            }
-          }
-        }
-      ]
-    );
-  };
+  //   Alert.alert(
+  //     '⚠️ Confirm Write Protection',
+  //     'This will make the tag permanently read-only. This action cannot be undone. Continue?',
+  //     [
+  //       { text: 'Cancel', style: 'cancel' },
+  //       {
+  //         text: 'Enable Protection',
+  //         style: 'destructive',
+  //         onPress: async () => {
+  //           setIsProtecting(true);
+  //           try {
+  //             await nfcManager.enableWriteProtection();
+  //             setProtectionStatus(prev => ({ ...prev, writeProtection: true }));
+  //             Alert.alert('✅ Success', 'Write protection enabled! Tag is now read-only.');
+  //           } catch (error) {
+  //             Alert.alert('❌ Error', 'Failed to enable write protection');
+  //           } finally {
+  //             setIsProtecting(false);
+  //           }
+  //         }
+  //       }
+  //     ]
+  //   );
+  // };
 
-  const handleEnableCloningProtection = async () => {
-    setIsProtecting(true);
-    try {
-      await nfcManager.enableCloningProtection();
-      setProtectionStatus(prev => ({ ...prev, cloningProtection: true }));
-      Alert.alert('✅ Success', 'Cloning protection enabled! Tag cloning attempts will be detected.');
-    } catch (error) {
-      Alert.alert('❌ Error', 'Failed to enable cloning protection');
-    } finally {
-      setIsProtecting(false);
-    }
-  };
+  // const handleEnableCloningProtection = async () => {
+  //   setIsProtecting(true);
+  //   try {
+  //     await nfcManager.enableCloningProtection();
+  //     setProtectionStatus(prev => ({ ...prev, cloningProtection: true }));
+  //     Alert.alert('✅ Success', 'Cloning protection enabled! Tag cloning attempts will be detected.');
+  //   } catch (error) {
+  //     Alert.alert('❌ Error', 'Failed to enable cloning protection');
+  //   } finally {
+  //     setIsProtecting(false);
+  //   }
+  // };
 
-  const handleCreateSecureBackup = async () => {
-    setIsProtecting(true);
-    try {
-      const backup = await nfcManager.generateSecureBackup(tagData);
-      setProtectionStatus(prev => ({ ...prev, backupCreated: true }));
-      Alert.alert(
-        '✅ Backup Created',
-        'Secure encrypted backup of tag data has been created and stored locally.',
-        [
-          { text: 'OK' },
-          { text: 'View Backup', onPress: () => console.log('Show backup:', backup) }
-        ]
-      );
-    } catch (error) {
-      Alert.alert('❌ Error', 'Failed to create backup');
-    } finally {
-      setIsProtecting(false);
-    }
-  };
+  // const handleCreateSecureBackup = async () => {
+  //   setIsProtecting(true);
+  //   try {
+  //     const backup = await nfcManager.generateSecureBackup(tagData);
+  //     setProtectionStatus(prev => ({ ...prev, backupCreated: true }));
+  //     Alert.alert(
+  //       '✅ Backup Created',
+  //       'Secure encrypted backup of tag data has been created and stored locally.',
+  //       [
+  //         { text: 'OK' },
+  //         { text: 'View Backup', onPress: () => console.log('Show backup:', backup) }
+  //       ]
+  //     );
+  //   } catch (error) {
+  //     Alert.alert('❌ Error', 'Failed to create backup');
+  //   } finally {
+  //     setIsProtecting(false);
+  //   }
+  // };
 
-  const protectionActions = [
-    {
-      id: 'read',
-      title: 'Enable Read Protection',
-      description: 'Prevent unauthorized reading of tag data',
-      icon: 'eye-off' as const,
-      color: '#4facfe',
-      enabled: !protectionStatus.readProtection,
-      action: handleEnableReadProtection,
-    },
-    {
-      id: 'write',
-      title: 'Enable Write Protection',
-      description: 'Make tag permanently read-only',
-      icon: 'lock-closed' as const,
-      color: '#fa709a',
-      enabled: tagData.isWritable && !protectionStatus.writeProtection,
-      action: handleEnableWriteProtection,
-    },
-    {
-      id: 'cloning',
-      title: 'Enable Cloning Protection',
-      description: 'Detect and prevent tag cloning attempts',
-      icon: 'shield-checkmark' as const,
-      color: '#667eea',
-      enabled: !protectionStatus.cloningProtection,
-      action: handleEnableCloningProtection,
-    },
-    {
-      id: 'backup',
-      title: 'Create Secure Backup',
-      description: 'Generate encrypted backup of tag data',
-      icon: 'cloud-upload' as const,
-      color: '#4CAF50',
-      enabled: !protectionStatus.backupCreated,
-      action: handleCreateSecureBackup,
-    },
-  ];
+  // const protectionActions = [
+  //   {
+  //     id: 'read',
+  //     title: 'Enable Read Protection',
+  //     description: 'Prevent unauthorized reading of tag data',
+  //     icon: 'eye-off' as const,
+  //     color: '#4facfe',
+  //     enabled: !protectionStatus.readProtection,
+  //     action: handleEnableReadProtection,
+  //   },
+  //   {
+  //     id: 'write',
+  //     title: 'Enable Write Protection',
+  //     description: 'Make tag permanently read-only',
+  //     icon: 'lock-closed' as const,
+  //     color: '#fa709a',
+  //     enabled: tagData.isWritable && !protectionStatus.writeProtection,
+  //     action: handleEnableWriteProtection,
+  //   },
+  //   {
+  //     id: 'cloning',
+  //     title: 'Enable Cloning Protection',
+  //     description: 'Detect and prevent tag cloning attempts',
+  //     icon: 'shield-checkmark' as const,
+  //     color: '#667eea',
+  //     enabled: !protectionStatus.cloningProtection,
+  //     action: handleEnableCloningProtection,
+  //   },
+  //   {
+  //     id: 'backup',
+  //     title: 'Create Secure Backup',
+  //     description: 'Generate encrypted backup of tag data',
+  //     icon: 'cloud-upload' as const,
+  //     color: '#4CAF50',
+  //     enabled: !protectionStatus.backupCreated,
+  //     action: handleCreateSecureBackup,
+  //   },
+  // ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -215,25 +215,22 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
                 <View key={index} style={styles.recordCard}>
                   <Text style={styles.recordTitle}>Record {index + 1}</Text>
                   <Text style={styles.recordType}>Type: {record.type || 'Unknown'}</Text>
-                  {record.payload?.type === 'text' && (
-                    <Text style={styles.recordContent}>Text: "{record.payload.text}"</Text>
-                  )}
-                  {record.payload?.type === 'uri' && (
-                    <Text style={styles.recordContent}>URI: {record.payload.uri}</Text>
-                  )}
+                  <Text style={styles.recordContent} numberOfLines={3}>
+                    {record.payload || '(empty)'}
+                  </Text>
                 </View>
               ))}
             </Animatable.View>
           )}
 
           {/* Protection Actions */}
-          <Animatable.View animation="fadeInUp" delay={600} style={styles.actionsCard}>
+          {/* <Animatable.View animation="fadeInUp" delay={600} style={styles.actionsCard}>
             <Text style={styles.cardTitle}>🛡️ Protection Actions</Text>
             <Text style={styles.actionsSubtitle}>
               Select protection measures to secure this NFC tag
-            </Text>
+            </Text> */}
             
-            {protectionActions.map((action, index) => (
+            {/* {protectionActions.map((action, index) => (
               <TouchableOpacity
                 key={action.id}
                 style={[
@@ -269,15 +266,15 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
                   </View>
                 </LinearGradient>
               </TouchableOpacity>
-            ))}
-          </Animatable.View>
+            ))} */}
+          {/* </Animatable.View> */}
 
           {/* Quick Actions */}
-          <Animatable.View animation="fadeInUp" delay={800} style={styles.quickActions}>
+          {/* <Animatable.View animation="fadeInUp" delay={800} style={styles.quickActions}>
             <TouchableOpacity 
               style={styles.quickAction}
               onPress={() => {
-                Alert.alert('🔄 Rescan', 'Place the tag near your device to scan again');
+                Alert.alert('rescan');
                 onClose();
               }}
             >
@@ -288,13 +285,13 @@ export const TagAnalysisModal: React.FC<TagAnalysisModalProps> = ({
             <TouchableOpacity 
               style={styles.quickAction}
               onPress={() => {
-                Alert.alert('📋 Export', 'Tag data will be exported to a secure format');
+                Alert.alert('📋 export data');
               }}
-            >
-              <Ionicons name="share" size={20} color="#667eea" />
+            > */}
+              {/* <Ionicons name="share" size={20} color="#667eea" />
               <Text style={styles.quickActionText}>Export Data</Text>
-            </TouchableOpacity>
-          </Animatable.View>
+            </TouchableOpacity> */}
+          {/* </Animatable.View> */}
         </ScrollView>
       </LinearGradient>
     </Modal>

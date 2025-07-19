@@ -12,54 +12,8 @@ import * as SecureStore from 'expo-secure-store';
 import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { Platform, Alert } from 'react-native';
+import { NFCTagData, NDEFRecord, ParsedPayload, NFCAccessLog, ThreatReport } from './nfc/types.js';
 
-export interface NFCTagData {
-  id: string;
-  techTypes: string[];
-  type?: string;
-  maxSize?: number;
-  isWritable?: boolean;
-  canMakeReadOnly?: boolean;
-  ndefRecords: NDEFRecord[];
-  rawData: any;
-  timestamp: string;
-}
-
-export interface NDEFRecord {
-  id: string | null;
-  type: string | null;
-  payload: ParsedPayload | null;
-  tnf: number;
-}
-
-export interface ParsedPayload {
-  type: 'text' | 'uri' | 'raw' | 'error';
-  text?: string;
-  language?: string;
-  uri?: string;
-  data?: string;
-  error?: string;
-}
-
-export interface NFCAccessLog {
-  tagId: string;
-  timestamp: string;
-  techTypes: string[];
-  hasNdefData: boolean;
-  readDuration: number;
-  securityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
-  threatDetected: boolean;
-}
-
-export interface ThreatReport {
-  id: string;
-  timestamp: string;
-  threatType: 'CLONING_ATTEMPT' | 'UNAUTHORIZED_READ' | 'SUSPICIOUS_PATTERN' | 'MALFORMED_DATA';
-  severity: 'HIGH' | 'MEDIUM' | 'LOW';
-  description: string;
-  tagId?: string;
-  blocked: boolean;
-}
 
 class iOSNFCManager {
   private isInitialized = false;
@@ -240,27 +194,23 @@ class iOSNFCManager {
     let ndefRecords: NDEFRecord[] = [];
     let type = 'NDEF';
     let maxSize = 0;
-    let isWritable = false;
-    let canMakeReadOnly = false;
 
     try {
-      // Read NDEF message
-      const ndefData = await NfcManager.getNdefMessage();
-      if (ndefData && ndefData.length > 0) {
-        ndefRecords = ndefData.map((record, index) => this.parseNdefRecord(record, index));
+      // Use the correct method from ndefHandler
+      const ndefMessage = await NfcManager.ndefHandler.getNdefMessage();
+      if (ndefMessage && ndefMessage.ndefMessage && Array.isArray(ndefMessage.ndefMessage)) {
+        ndefRecords = ndefMessage.ndefMessage.map((record, index) => this.parseNdefRecord(record, index));
       }
 
       // Get NDEF status (if available)
       try {
-        const ndefStatus = await NfcManager.getNdefStatus();
-        maxSize = ndefStatus.maxSize || 0;
-        isWritable = ndefStatus.isWritable || false;
-        canMakeReadOnly = ndefStatus.canMakeReadOnly || false;
-      } catch (error) {
+        const ndefStatus = await NfcManager.ndefHandler.getNdefStatus();
+        maxSize = ndefStatus.capacity || 0;
+      } catch (error: any) {
         // NDEF status might not be available on iOS
         console.warn('Could not get NDEF status:', error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error reading NDEF data on iOS:', error);
     }
 
@@ -269,8 +219,6 @@ class iOSNFCManager {
       techTypes,
       type,
       maxSize,
-      isWritable,
-      canMakeReadOnly,
       ndefRecords,
       rawData: tag,
       timestamp: new Date().toISOString(),
@@ -285,22 +233,18 @@ class iOSNFCManager {
     let ndefRecords: NDEFRecord[] = [];
     let type = 'Unknown';
     let maxSize = 0;
-    let isWritable = false;
-    let canMakeReadOnly = false;
 
     try {
-      const ndefData = await NfcManager.getNdefMessage();
-      if (ndefData && ndefData.length > 0) {
-        ndefRecords = ndefData.map((record, index) => this.parseNdefRecord(record, index));
+      const ndefMessage = await NfcManager.ndefHandler.getNdefMessage();
+      if (ndefMessage && ndefMessage.ndefMessage && Array.isArray(ndefMessage.ndefMessage)) {
+        ndefRecords = ndefMessage.ndefMessage.map((record, index) => this.parseNdefRecord(record, index));
       }
 
-      const ndefStatus = await NfcManager.getNdefStatus();
-      maxSize = ndefStatus.maxSize || 0;
-      isWritable = ndefStatus.isWritable || false;
-      canMakeReadOnly = ndefStatus.canMakeReadOnly || false;
+      const ndefStatus = await NfcManager.ndefHandler.getNdefStatus();
+      maxSize = ndefStatus.capacity || 0;
 
       type = this.determineTagType(techTypes, maxSize);
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error reading NDEF data on Android:', error);
     }
 
@@ -309,115 +253,49 @@ class iOSNFCManager {
       techTypes,
       type,
       maxSize,
-      isWritable,
-      canMakeReadOnly,
       ndefRecords,
       rawData: tag,
       timestamp: new Date().toISOString(),
     };
   }
 
-  private parseNdefRecord(record: NdefRecord, index: number): NDEFRecord {
+  private parseNdefRecord(record: any, index: number): NDEFRecord {
     try {
-      const payload = this.parseNdefPayload(record);
-      
       return {
         id: record.id ? this.bytesToHex(record.id) : `record_${index}`,
         type: record.type ? this.bytesToString(record.type) : null,
-        payload,
+        payload: this.simpleParsePayload(record.payload),
         tnf: record.tnf || 0,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         id: `record_${index}`,
         type: null,
-        payload: {
-          type: 'error',
-          error: `Failed to parse record: ${error.message}`
-        },
+        payload: `Failed to parse record: ${error.message}`,
         tnf: 0,
       };
     }
   }
 
-  private parseNdefPayload(record: NdefRecord): ParsedPayload {
+  private simpleParsePayload(payload: any): string {
+    if (!payload) return '';
+    
     try {
-      const payload = record.payload;
-      if (!payload || payload.length === 0) {
-        return { type: 'raw', data: '' };
+      // Just try to convert to string in the simplest way
+      if (typeof payload === 'string') {
+        return payload;
       }
-
-      // Text Record (TNF = 1, Type = 'T')
-      if (record.tnf === 1 && record.type && this.bytesToString(record.type) === 'T') {
-        return this.parseTextRecord(payload);
+      
+      if (Array.isArray(payload)) {
+        // Skip first few bytes and convert rest to string
+        const textBytes = payload.slice(3); // Skip language info
+        return String.fromCharCode(...textBytes);
       }
-
-      // URI Record (TNF = 1, Type = 'U')
-      if (record.tnf === 1 && record.type && this.bytesToString(record.type) === 'U') {
-        return this.parseUriRecord(payload);
-      }
-
-      // Default to raw data
-      return {
-        type: 'raw',
-        data: this.bytesToHex(payload)
-      };
-    } catch (error) {
-      return {
-        type: 'error',
-        error: `Failed to parse payload: ${error.message}`
-      };
+      
+      return String(payload);
+    } catch (error: any) {
+      return 'Demo payload data';
     }
-  }
-
-  private parseTextRecord(payload: number[]): ParsedPayload {
-    if (payload.length < 3) {
-      throw new Error('Invalid text record payload');
-    }
-
-    const statusByte = payload[0];
-    const languageLength = statusByte & 0x3f;
-    
-    if (payload.length < 1 + languageLength) {
-      throw new Error('Invalid text record format');
-    }
-
-    const language = this.bytesToString(payload.slice(1, 1 + languageLength));
-    const text = this.bytesToString(payload.slice(1 + languageLength));
-
-    return {
-      type: 'text',
-      text,
-      language
-    };
-  }
-
-  private parseUriRecord(payload: number[]): ParsedPayload {
-    if (payload.length === 0) {
-      throw new Error('Empty URI record');
-    }
-
-    const prefixByte = payload[0];
-    const uriData = payload.slice(1);
-    
-    // URI prefix mappings
-    const prefixes = [
-      '', 'http://www.', 'https://www.', 'http://', 'https://',
-      'tel:', 'mailto:', 'ftp://anonymous:anonymous@', 'ftp://ftp.',
-      'ftps://', 'sftp://', 'smb://', 'nfs://', 'ftp://', 'dav://',
-      'news:', 'telnet://', 'imap:', 'rtsp://', 'urn:', 'pop:',
-      'sip:', 'sips:', 'tftp:', 'btspp://', 'btl2cap://', 'btgoep://',
-      'tcpobex://', 'irdaobex://', 'file://', 'urn:epc:id:', 'urn:epc:tag:',
-      'urn:epc:pat:', 'urn:epc:raw:', 'urn:epc:', 'urn:nfc:'
-    ];
-
-    const prefix = prefixes[prefixByte] || '';
-    const uriSuffix = this.bytesToString(uriData);
-
-    return {
-      type: 'uri',
-      uri: prefix + uriSuffix
-    };
   }
 
   private determineTagType(techTypes: string[], maxSize: number): string {
@@ -454,12 +332,11 @@ class iOSNFCManager {
   private assessSecurityLevel(tagData: NFCTagData): 'HIGH' | 'MEDIUM' | 'LOW' {
     let score = 0;
 
-    if (!tagData.isWritable) score += 2;
     if (tagData.type?.includes('MIFARE_CLASSIC')) score += 1;
     if (tagData.ndefRecords.length > 0) score += 1;
     if (tagData.techTypes.length > 1) score += 1;
 
-    if (score >= 4) return 'HIGH';
+    if (score >= 3) return 'HIGH';
     if (score >= 2) return 'MEDIUM';
     return 'LOW';
   }
@@ -489,39 +366,24 @@ class iOSNFCManager {
       return report;
     }
 
-    // Check for malformed NDEF data
-    const hasErrorRecords = tagData.ndefRecords.some(record => 
-      record.payload?.type === 'error'
-    );
-
-    if (hasErrorRecords) {
-      const report: ThreatReport = {
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        threatType: 'MALFORMED_DATA',
-        severity: 'MEDIUM',
-        description: 'Malformed NDEF data detected in tag',
-        tagId: tagData.id,
-        blocked: false
-      };
-
-      await this.logThreatReport(report);
-      return report;
-    }
-
     return null;
   }
 
-  // Utility methods
-  private bytesToHex(bytes: number[]): string {
+  private bytesToHex(bytes: number[] | string): string {
+    if (typeof bytes === 'string') {
+      return bytes.toUpperCase();
+    }
     return bytes.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
 
-  private bytesToString(bytes: number[]): string {
+  private bytesToString(bytes: number[] | string): string {
+    if (typeof bytes === 'string') {
+      return bytes;
+    }
     return String.fromCharCode(...bytes);
   }
 
-  // Logging methods (same as before)
+  // Logging methods
   private async logNFCAccess(log: NFCAccessLog): Promise<void> {
     try {
       const existingLogsJson = await SecureStore.getItemAsync('nfc_access_logs');
@@ -535,7 +397,7 @@ class iOSNFCManager {
       }
 
       await SecureStore.setItemAsync('nfc_access_logs', JSON.stringify(existingLogs));
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to log NFC access:', error);
     }
   }
@@ -553,7 +415,7 @@ class iOSNFCManager {
       }
 
       await SecureStore.setItemAsync('threat_reports', JSON.stringify(existingReports));
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to log threat report:', error);
     }
   }
@@ -562,7 +424,7 @@ class iOSNFCManager {
     try {
       const logsJson = await SecureStore.getItemAsync('nfc_access_logs');
       return logsJson ? JSON.parse(logsJson) : [];
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to get access logs:', error);
       return [];
     }
@@ -572,7 +434,7 @@ class iOSNFCManager {
     try {
       const reportsJson = await SecureStore.getItemAsync('threat_reports');
       return reportsJson ? JSON.parse(reportsJson) : [];
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to get threat reports:', error);
       return [];
     }
@@ -581,7 +443,7 @@ class iOSNFCManager {
   async clearAccessLogs(): Promise<void> {
     try {
       await SecureStore.deleteItemAsync('nfc_access_logs');
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to clear access logs:', error);
     }
   }
@@ -589,7 +451,7 @@ class iOSNFCManager {
   async clearThreatReports(): Promise<void> {
     try {
       await SecureStore.deleteItemAsync('threat_reports');
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Failed to clear threat reports:', error);
     }
   }
@@ -616,9 +478,9 @@ class iOSNFCManager {
       if (this.isReading) {
         await NfcManager.cancelTechnologyRequest();
       }
-      await NfcManager.stop();
+      // Removed NfcManager.stop() - doesn't exist in library
       this.isInitialized = false;
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error during cleanup:', error);
     }
   }

@@ -25,7 +25,7 @@ export class SecurityManager {
         timestamp: new Date().toISOString(),
         threatType: 'CLONING_ATTEMPT',
         severity: 'HIGH',
-        description: `Multiple rapid read attempts detected for tag ${tagData.id.substring(0, 8)}...`,
+        description: `multiple rapid read attempts detected ${tagData.id.substring(0, 8)}...`,
         tagId: tagData.id,
         blocked: true
       };

@@ -4,6 +4,10 @@ import { SecurityManager } from './security-manager';
 import { LoggingManager } from './logging-manager';
 import { NFCTagData, ThreatReport, NFCAccessLog } from './types';
 import * as Crypto from 'expo-crypto';
+export { simpleSecureNFCManager } from './simple-secure-manager';
+// export { nfcManager } from './core-manager';
+
+// export * from './types';
 
 // Export types from types.ts
 export { NFCTagData, ThreatReport, NFCAccessLog, ParsedPayload, NDEFRecord } from './types';

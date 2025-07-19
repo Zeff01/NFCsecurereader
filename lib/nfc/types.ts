@@ -16,8 +16,8 @@ export interface NFCTagData {
   maxSize?: number;
   isWritable?: boolean;
   canMakeReadOnly?: boolean;
-  ndefRecords: NDEFRecord[];  // ✅ Properly typed now!
-  rawData: any; // Keep this as any since it's platform-specific
+  ndefRecords: NDEFRecord[]; 
+  rawData: any; 
   timestamp: string;
 }
 
@@ -63,4 +63,14 @@ export interface CloneResult {
   message: string;
   clonedData?: ClonedCardData;
   error?: string;
+}
+
+export interface NFCAccessLog {
+  tagId: string;
+  timestamp: string;
+  techTypes: string[];
+  hasNdefData: boolean;
+  readDuration: number;
+  securityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+  threatDetected: boolean;
 }

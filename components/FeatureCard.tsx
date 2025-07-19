@@ -14,7 +14,7 @@ interface FeatureCardProps {
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
-  color: string[]; // Keep this as string[] for the interface
+  color: string[];
   onPress: () => void;
   delay: number;
   disabled?: boolean;
@@ -91,7 +91,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
         disabled={disabled}
       >
         <LinearGradient
-          colors={color as any} // ✅ Fix: Type assertion to bypass the strict typing
+          colors={color as any}
           style={styles.cardGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -124,7 +124,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   );
 };
 
-// ... rest of your styles remain the same
+
 const styles = StyleSheet.create({
   cardContainer: {
     marginBottom: 16,

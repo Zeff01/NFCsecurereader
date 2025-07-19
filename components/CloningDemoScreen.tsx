@@ -18,14 +18,14 @@ const CloningDemoScreen = () => {
     try {
       const isAvailable = await nfcManager.isNFCAvailable();
       if (!isAvailable) {
-        Alert.alert('📱 NFC Not Available', 'NFC is not supported or enabled on this device.');
+        Alert.alert('📱 NFC not available');
         return;
       }
   
       Alert.alert(
-        '🚨 Cloning Demo - Step 1',
-        'Hold your device near an NFC tag to extract data...',
-        [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
+        '🚨 Step 1',
+        'hold device near an NFC tag to extract data',
+        [{ text: 'cancel', onPress: () => setIsLoading(false) }]
       );
   
       const tagData = await nfcManager.readNFCTag();
@@ -63,20 +63,20 @@ const CloningDemoScreen = () => {
       setCurrentStep(2);
       
       Alert.alert(
-        'Step 1 Complete', 
-        `Real card data extracted!\n\n` +
+        'step 1 success!', 
+        `EXTRACTED DATA BELOW:\n\n` +
         `UID: ${tagData.id}\n` +
         `Type: ${tagData.type || 'Unknown'}\n` +
         `Tech Types: ${tagData.techTypes.join(', ')}\n` +
         `Content: ${realContent || 'Empty tag'}\n` +
         `Records: ${tagData.ndefRecords.length}\n` +
         `Writable: ${tagData.isWritable ? 'Yes' : 'No'}`,
-        [{ text: 'Next Step' }]
+        [{ text: 'next step' }]
       );
       
     } catch (error: any) {
-      console.error('Step 1 error:', error);
-      Alert.alert('❌ NFC Scan Error', error.message, [{ text: 'Try Again' }]);
+      console.error('step 1 error:', error);
+      Alert.alert('❌ scan error', error.message, [{ text: 'Try Again' }]);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +84,7 @@ const CloningDemoScreen = () => {
   
   const handleStep2 = async () => {
     if (!extractedData) {
-      Alert.alert('Error', 'No extracted data found. Please complete Step 1 first.');
+      Alert.alert('Error', 'no extracted data found');
       return;
     }
   
@@ -93,8 +93,8 @@ const CloningDemoScreen = () => {
       console.log('Starting Step 2: Clone Card');
       
       Alert.alert(
-        '🚨 Cloning Demo - Step 2',
-        'Hold your device near a BLANK NFC tag to write the cloned data...',
+        '🚨 step 2',
+        'hold your device near a BLANK tag to write cloned data',
         [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
       );
   
@@ -111,7 +111,7 @@ const CloningDemoScreen = () => {
       
       const result: CloneResult = {
         success: true,
-        message: 'Card successfully cloned! The blank tag now contains the original card\'s real data.',
+        message: 'successfully cloned! blank tag now contains the OG card\'s real data.',
         clonedData: extractedData
       };
       
@@ -119,8 +119,7 @@ const CloningDemoScreen = () => {
       setCurrentStep(3);
       
       Alert.alert(
-        'Step 2 Complete', 
-        `Clone successful!\n\n` +
+        'step 2 success!', 
         `Original UID: ${extractedData.originalUID}\n` +
         `Original Content: ${extractedData.extractedData.realContent}\n` +
         `Clone created at: ${extractedData.clonedAt}`,
@@ -128,8 +127,8 @@ const CloningDemoScreen = () => {
       );
       
     } catch (error: any) {
-      console.error('Step 2 error:', error);
-      Alert.alert('Error', `Failed to clone card: ${error.message}`);
+      console.error('step 2 error:', error);
+      Alert.alert('error', `failed to clone: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -146,14 +145,14 @@ const CloningDemoScreen = () => {
       console.log('Starting Step 3: Test Clone');
       
       Alert.alert(
-        '🚨 Cloning Demo - Step 3',
-        'Hold your device near the cloned tag to test...',
-        [{ text: 'Cancel', onPress: () => setIsLoading(false) }]
+        '🚨 step 3',
+        'hold your device near the CLONED tag',
+        [{ text: 'cancel', onPress: () => setIsLoading(false) }]
       );
   
       // Read the cloned tag
       const tagData = await nfcManager.readNFCTag();
-      console.log('Step 3 - Tag data:', tagData);
+      console.log('step 3 tag data:', tagData);
       
       // Parse the cloned data from the payload
       let isClone = false;
@@ -170,7 +169,7 @@ const CloningDemoScreen = () => {
         }
       });
       
-      console.log('Step 3 - Full payload:', fullPayload);
+      console.log('step 3 - CLONED DETAILS:', fullPayload);
       
       // Check if payload contains our clone marker
       if (fullPayload.includes('CLONE_MARKER:')) {
@@ -191,7 +190,7 @@ const CloningDemoScreen = () => {
         });
       }
       
-      console.log('Step 3 - Parsed data:', {
+      console.log('step 3 parsed data:', {
         isClone,
         originalUID,
         originalContent,
@@ -220,47 +219,47 @@ const CloningDemoScreen = () => {
           isValidClone,
           hasOriginalContent,
           clonedAt,
-          detectionMethod: isClone ? 'Clone marker found in NDEF data' : 'No clone markers detected'
+          detectionMethod: isClone ? 'clone marker found in NDEF data' : 'No clone markers detected'
         }
       };
       
       setTestResult(result);
       
       // Create detailed alert message
-      let alertMessage = `Scanned Tag ID: ${tagData.id}\n`;
-      alertMessage += `Clone Detection: ${result.isClone ? '⚠️ CLONE DETECTED' : '✅ Appears Legitimate'}\n`;
+      let alertMessage = `scanned tag ID: ${tagData.id}\n`;
+      alertMessage += `clone detection: ${result.isClone ? '⚠️ CLONE DETECTED' : '✅ yes'}\n`;
       
       if (result.isClone) {
         alertMessage += `Original UID: ${originalUID}\n`;
         alertMessage += `UID Match: ${isValidClone ? '✅ YES' : '❌ NO'}\n`;
         alertMessage += `Content Match: ${hasOriginalContent ? '✅ YES' : '❌ NO'}\n`;
-        alertMessage += `Clone Status: ${cloneSuccessful ? '🔓 SUCCESSFUL CLONE' : '🔒 FAILED CLONE'}\n\n`;
+        alertMessage += `Clone Status: ${cloneSuccessful ? 'SUCCESS' : 'FAIL'}\n\n`;
         
         if (cloneSuccessful) {
-          alertMessage += 'SECURITY BREACH: The cloned tag contains identical data to the original card!';
+          alertMessage += 'cloned tag contains identical data to the OG card';
         } else {
-          alertMessage += 'Clone detected but data doesn\'t match original - clone failed';
+          alertMessage += 'clone detected but data doesn\'t match OG';
         }
         
         if (originalContent && originalContent !== 'EMPTY_TAG') {
-          alertMessage += `\n\nCloned Content: ${originalContent}`;
+          alertMessage += `\n\ncloned content: ${originalContent}`;
         }
       } else {
-        alertMessage += '\nNo clone markers detected - appears to be a legitimate tag';
+        alertMessage += '\nno clone markers detected';
       }
       
       Alert.alert(
-        'Step 3 Complete - Clone Test Results',
+        'step 3 complete - RESULTS:',
         alertMessage,
         [
-          { text: 'Reset Demo', onPress: resetDemo },
-          { text: 'OK' }
+          { text: 'reset', onPress: resetDemo },
+          { text: 'ok' }
         ]
       );
       
     } catch (error: any) {
-      console.error('Step 3 error:', error);
-      Alert.alert('Error', `Failed to test clone: ${error.message}`);
+      console.error('step 3 error:', error);
+      Alert.alert(`failed to test clone: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -271,27 +270,28 @@ const CloningDemoScreen = () => {
     setExtractedData(null);
     setCloneResult(null);
     setTestResult(null);
-    Alert.alert('Demo Reset', 'Ready to start over!');
+    Alert.alert('start over available');
   };
 
-  // Fixed: Return the JSX directly instead of having a separate function
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>🚨 NFC Cloning Vulnerability Demo</Text>
+      <Text style={styles.title}>Cloning demo!!!</Text>
       <Text style={styles.subtitle}>
-        This demo shows how NFC cards can be cloned using only real tag data
+        reads a real tag, writes it to a blank tag, and tests if blank tag will contain real tag's data 
+        (not simulated!!!)
       </Text>
 
       {/* Step 1 */}
       <View style={[styles.stepContainer, currentStep === 1 && styles.activeStep]}>
-        <Text style={styles.stepTitle}>Step 1: Extract Real Card Data</Text>
+        <Text style={styles.stepTitle}>step 1: extract real card data</Text>
         <Text style={styles.stepDescription}>
-          Read a real NFC tag to extract its actual data
+          read a real tag to extract its data
         </Text>
         
         {extractedData && (
           <View style={styles.dataContainer}>
-            <Text style={styles.dataTitle}>Real Extracted Data:</Text>
+            <Text style={styles.dataTitle}>DATA:</Text>
             <Text style={styles.dataText}>UID: {extractedData.originalUID}</Text>
             <Text style={styles.dataText}>Content: {extractedData.extractedData.realContent}</Text>
             <Text style={styles.dataText}>Records: {extractedData.extractedData.records.length}</Text>
@@ -305,23 +305,23 @@ const CloningDemoScreen = () => {
           disabled={currentStep !== 1 || isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading && currentStep === 1 ? 'Scanning...' : 'Scan Real Card'}
+            {isLoading && currentStep === 1 ? 'scanning' : 'scan'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Step 2 */}
       <View style={[styles.stepContainer, currentStep === 2 && styles.activeStep]}>
-        <Text style={styles.stepTitle}>Step 2: Clone Real Data to Blank Tag</Text>
+        <Text style={styles.stepTitle}>step 2: clone real data to blank tag</Text>
         <Text style={styles.stepDescription}>
-          Write the real extracted data to a blank NFC tag
+          copy the real data to a blank card
         </Text>
         
         {cloneResult && (
           <View style={styles.dataContainer}>
-            <Text style={styles.dataTitle}>Clone Result:</Text>
+            <Text style={styles.dataTitle}>clone result:</Text>
             <Text style={[styles.dataText, { color: cloneResult.success ? 'green' : 'red' }]}>
-              {cloneResult.success ? '✅ Real Data Cloned' : '❌ Clone Failed'}
+              {cloneResult.success ? '✅ real data cloned' : '❌ clone failed'}
             </Text>
             <Text style={styles.dataText}>{cloneResult.message}</Text>
           </View>
@@ -333,26 +333,26 @@ const CloningDemoScreen = () => {
           disabled={currentStep !== 2 || isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading && currentStep === 2 ? 'Cloning...' : 'Clone Real Data'}
+            {isLoading && currentStep === 2 ? 'cloning in progress' : 'clone'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Step 3 */}
       <View style={[styles.stepContainer, currentStep === 3 && styles.activeStep]}>
-        <Text style={styles.stepTitle}>Step 3: Test Cloned Data</Text>
+        <Text style={styles.stepTitle}>step 3: test cloned data</Text>
         <Text style={styles.stepDescription}>
-          Verify the cloned tag contains the original real data
+          verify the cloned tag contains the OG data
         </Text>
         
         {testResult && (
           <View style={styles.dataContainer}>
-            <Text style={styles.dataTitle}>Test Results:</Text>
+            <Text style={styles.dataTitle}>RESULTS:</Text>
             <Text style={[styles.dataText, { color: testResult.isClone ? 'orange' : 'green' }]}>
-              Detection: {testResult.isClone ? '⚠️ Clone Detected' : '✅ Appears Legitimate'}
+              detection: {testResult.isClone ? '✅ clone detected' : 'appears legitimate'}
             </Text>
             <Text style={[styles.dataText, { color: testResult.canAccess ? 'red' : 'green' }]}>
-              Clone Status: {testResult.canAccess ? '🔓 SUCCESSFUL' : '🔒 FAILED'}
+              clone status: {testResult.canAccess ? 'SUCCESS' : 'FAIL'}
             </Text>
           </View>
         )}
@@ -363,27 +363,16 @@ const CloningDemoScreen = () => {
           disabled={currentStep !== 3 || isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading && currentStep === 3 ? 'Testing...' : 'Test Cloned Data'}
+            {isLoading && currentStep === 3 ? 'testing' : 'test cloned data'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Reset Button */}
       <TouchableOpacity style={styles.resetButton} onPress={resetDemo}>
-        <Text style={styles.buttonText}>Reset Demo</Text>
+        <Text style={styles.buttonText}>reset</Text>
       </TouchableOpacity>
 
-      {/* Security Warning */}
-      <View style={styles.warningContainer}>
-        <Text style={styles.warningTitle}>⚠️ Real Data Security Risk</Text>
-        <Text style={styles.warningText}>
-          This demonstration uses real NFC tag data to show how:
-        </Text>
-        <Text style={styles.warningText}>• Any NFC tag can be read and cloned</Text>
-        <Text style={styles.warningText}>• Real credentials can be duplicated</Text>
-        <Text style={styles.warningText}>• Physical access cards are vulnerable</Text>
-        <Text style={styles.warningText}>• No simulation - actual tag data is used</Text>
-      </View>
     </ScrollView>
   );
 };
